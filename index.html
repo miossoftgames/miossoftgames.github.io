@@ -1,15 +1,81 @@
 <!doctype html>
 <html lang="en">
   <head>
-          <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F8WJFXPVGS"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-    
-      gtag('config', 'G-F8WJFXPVGS');
-    </script>
+          <!-- MIOS PRIVACY: Google Analytics is loaded only after explicit opt-in. -->
+<script>
+(() => {
+  'use strict';
+  const ID = 'G-F8WJFXPVGS';
+  // Set true ONLY after verifying the applicable international-transfer safeguards.
+  const ANALYTICS_ENABLED = false;
+  const KEY = 'miossoft.privacy.consent.v1';
+  const TTL = 180 * 24 * 60 * 60 * 1000;
+  const disabled = 'ga-disable-' + ID;
+  let current = null, started = false;
+  function read() {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY));
+      if (v && v.version === 1 && v.available === ANALYTICS_ENABLED && typeof v.analytics === 'boolean' &&
+          Number.isFinite(v.time) && Date.now() >= v.time && Date.now() - v.time < TTL) return v;
+    } catch (_) {}
+    return null;
+  }
+  function eraseAnalyticsCookies() {
+    const names = document.cookie.split(';').map(x => x.trim().split('=')[0])
+      .filter(x => /^(_ga($|_)|_gid$|_gat($|_)|_gac_|_gcl_)/.test(x));
+    const labels = location.hostname.split('.');
+    const domains = ['', ...labels.slice(0, -1).map((_, i) => labels.slice(i).join('.'))];
+    const paths = new Set(['/']);
+    const parts = location.pathname.split('/').filter(Boolean);
+    for (let i = 1; i <= parts.length; i++) paths.add('/' + parts.slice(0, i).join('/'));
+    for (const name of names) for (const domain of domains) for (const path of paths) {
+      document.cookie = name + '=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=' + path + (domain ? '; Domain=' + domain : '');
+    }
+  }
+  function start() {
+    if (!ANALYTICS_ENABLED || started || !current || !current.analytics) return;
+    started = true;
+    window[disabled] = false;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ window.dataLayer.push(arguments); };
+    window.gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+    window.gtag('consent','update',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+    window.gtag('js',new Date());
+    window.gtag('config', ID, {allow_google_signals:false,allow_ad_personalization_signals:false,cookie_expires:15552000,cookie_update:false});
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID;
+    document.head.appendChild(script);
+  }
+  function apply(next) {
+    current = next;
+    if (ANALYTICS_ENABLED && next && next.analytics) { start(); return; }
+    window[disabled] = true;
+    eraseAnalyticsCookies();
+    if (started) location.reload(); // remove the running tag, not just its cookies
+  }
+  function save(analytics) {
+    const next = {version:1,available:ANALYTICS_ENABLED,analytics:Boolean(analytics && ANALYTICS_ENABLED),requestedAnalytics:Boolean(analytics),time:Date.now()};
+    try { localStorage.setItem(KEY, JSON.stringify(next)); } catch (_) {}
+    apply(next);
+  }
+  window[disabled] = true;
+  apply(read());
+  window.MiosPrivacy = {get:() => current, save, enabled:ANALYTICS_ENABLED};
+  window.addEventListener('storage', e => {
+    if (e.key === KEY || e.key === null) {
+      apply(read());
+      window.dispatchEvent(new Event('mios:privacychange'));
+    }
+  });
+  // An open tab must not keep measuring after consent expires.
+  window.addEventListener('pageshow', e => { if (e.persisted) { apply(read()); window.dispatchEvent(new Event('mios:privacychange')); } });
+  setInterval(() => {
+    if (current && Date.now() - current.time >= TTL) { apply(null); window.dispatchEvent(new Event('mios:privacychange')); }
+  }, 60000);
+})();
+</script>
+<!-- MIOS PRIVACY END -->
         
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -30,8 +96,13 @@
     />
     <meta name="theme-color" content="#060806" />
     <title translate="no">Miossoft Games</title>
+    <script>
+      // Start each page load with the original green studio theme.
+      document.documentElement.dataset.miosTheme = 'neon';
+    </script>
     <style>
       :root {
+        --mios-accent-rgb: 16, 219, 5;
         --bg: #060806;
         --bg2: #090d0a;
         --surface: #0d130e;
@@ -81,8 +152,8 @@
         opacity: 0.48;
         background: repeating-linear-gradient(
           to bottom,
-          rgba(16, 219, 5, 0.018) 0,
-          rgba(16, 219, 5, 0.018) 1px,
+          rgba(var(--mios-accent-rgb), 0.018) 0,
+          rgba(var(--mios-accent-rgb), 0.018) 1px,
           transparent 1px,
           transparent 4px
         );
@@ -95,7 +166,7 @@
         z-index: 1;
         background: radial-gradient(
           circle at 75% 5%,
-          rgba(16, 219, 5, 0.07),
+          rgba(var(--mios-accent-rgb), 0.07),
           transparent 33%
         );
       }
@@ -124,7 +195,7 @@
       .logo span,
       h2 span {
         color: var(--neon);
-        text-shadow: 0 0 14px rgba(16, 219, 5, 0.65);
+        text-shadow: 0 0 14px rgba(var(--mios-accent-rgb), 0.65);
       }
       .navlinks {
         display: flex;
@@ -227,8 +298,8 @@
       h1 span {
         color: var(--neon);
         text-shadow:
-          0 0 9px rgba(16, 219, 5, 0.46),
-          0 0 34px rgba(16, 219, 5, 0.12);
+          0 0 9px rgba(var(--mios-accent-rgb), 0.46),
+          0 0 34px rgba(var(--mios-accent-rgb), 0.12);
       }
       .hero-copy > p {
         max-width: 590px;
@@ -257,12 +328,12 @@
       .btn:hover {
         color: var(--neon);
         border-color: var(--neon);
-        box-shadow: 0 0 20px rgba(16, 219, 5, 0.13);
+        box-shadow: 0 0 20px rgba(var(--mios-accent-rgb), 0.13);
         transform: translateY(-2px);
       }
       .btn.primary {
         background: var(--neon);
-        color: #061009;
+        color: var(--mios-button-ink, #061009);
         border-color: var(--neon);
       }
       .signal {
@@ -286,7 +357,7 @@
       }
       .o2 {
         inset: 34%;
-        box-shadow: 0 0 25px rgba(16, 219, 5, 0.11);
+        box-shadow: 0 0 25px rgba(var(--mios-accent-rgb), 0.11);
       }
       .axis {
         position: absolute;
@@ -307,8 +378,8 @@
         height: auto;
         display: block;
         filter:
-          drop-shadow(0 0 12px rgba(16, 219, 5, 0.8))
-          drop-shadow(0 0 36px rgba(16, 219, 5, 0.35));
+          drop-shadow(0 0 12px rgba(var(--mios-accent-rgb), 0.8))
+          drop-shadow(0 0 36px rgba(var(--mios-accent-rgb), 0.35));
         animation: logo-breathe 3.4s ease-in-out infinite;
       }
       .code {
@@ -359,7 +430,7 @@
         transform: translateY(-8px);
         box-shadow:
           0 18px 60px rgba(0, 0, 0, 0.5),
-          0 0 28px rgba(16, 219, 5, 0.12);
+          0 0 28px rgba(var(--mios-accent-rgb), 0.12);
       }
       .cover {
         min-height: 480px;
@@ -375,12 +446,12 @@
         background: repeating-linear-gradient(
             90deg,
             transparent 0 38px,
-            rgba(16, 219, 5, 0.04) 39px
+            rgba(var(--mios-accent-rgb), 0.04) 39px
           ),
           repeating-linear-gradient(
             0deg,
             transparent 0 38px,
-            rgba(16, 219, 5, 0.04) 39px
+            rgba(var(--mios-accent-rgb), 0.04) 39px
           );
       }
       .symbol {
@@ -392,7 +463,7 @@
         color: var(--neon);
         opacity: 0.8;
         font: 900 145px Impact;
-        text-shadow: 0 0 55px rgba(16, 219, 5, 0.28);
+        text-shadow: 0 0 55px rgba(var(--mios-accent-rgb), 0.28);
         transition: 0.5s;
       }
       .game:hover .symbol {
@@ -455,7 +526,7 @@
         top: auto;
         bottom: 0;
         min-height: 42%;
-        background: #060806;
+        background: var(--bg);
         border-top: 1px solid var(--border);
       }
       .status {
@@ -489,7 +560,7 @@
         gap: 6px;
         min-height: 25px;
         padding: 4px 8px;
-        border: 1px solid rgba(16, 219, 5, 0.28);
+        border: 1px solid rgba(var(--mios-accent-rgb), 0.28);
         background: rgba(6, 8, 6, 0.72);
         color: #a6b9aa;
         font: 700 8px monospace;
@@ -512,7 +583,7 @@
       .game:hover .platform {
         color: var(--neon);
         border-color: var(--dark);
-        background: rgba(16, 219, 5, 0.06);
+        background: rgba(var(--mios-accent-rgb), 0.06);
       }
       .view {
         max-height: 0;
@@ -542,7 +613,7 @@
         opacity: 1;
         margin-top: 18px;
         border-color: var(--dark);
-        background: rgba(16, 219, 5, 0.06);
+        background: rgba(var(--mios-accent-rgb), 0.06);
       }
       .game-unreleased {
         cursor: not-allowed;
@@ -595,7 +666,7 @@
         border: 1px solid var(--bright);
         background: linear-gradient(
           135deg,
-          rgba(16, 219, 5, 0.045),
+          rgba(var(--mios-accent-rgb), 0.045),
           transparent
         );
         display: grid;
@@ -663,7 +734,7 @@
       .founder-social:hover {
         color: var(--neon);
         border-color: var(--neon);
-        background: rgba(16, 219, 5, 0.06);
+        background: rgba(var(--mios-accent-rgb), 0.06);
         transform: translateY(-2px);
       }
       .founder-social:hover b {
@@ -686,7 +757,7 @@
         color: transparent;
         -webkit-text-stroke: 1px var(--neon);
         font-style: normal;
-        text-shadow: 0 0 25px rgba(16, 219, 5, 0.13);
+        text-shadow: 0 0 25px rgba(var(--mios-accent-rgb), 0.13);
       }
       .contact .index {
         justify-content: center;
@@ -760,8 +831,8 @@
       @keyframes logo-breathe {
         50% {
           transform: scale(1.045);
-          filter: drop-shadow(0 0 13px rgba(16, 219, 5, 0.78))
-            drop-shadow(0 0 34px rgba(16, 219, 5, 0.3));
+          filter: drop-shadow(0 0 13px rgba(var(--mios-accent-rgb), 0.78))
+            drop-shadow(0 0 34px rgba(var(--mios-accent-rgb), 0.3));
         }
       }
       @keyframes hover {
@@ -880,8 +951,1232 @@
           transition: none !important;
         }
       }
-    </style>
-  </head>
+    
+/* MIOS CURSOR STYLES START */
+  /* Custom cursor: HTML/CSS reticle, no image asset required. */
+  .mios-cursor{
+    position:fixed;top:0;left:0;
+    width:0;height:0;
+    z-index:2147483647;
+    pointer-events:none;
+    visibility:hidden;
+    color:var(--neon);
+  }
+  .mios-cursor.is-visible{visibility:visible;}
+  /* Game status targeting: unreleased -> red, released -> default neon green. */
+  .mios-cursor.is-game-unreleased{color:#ff4646;}
+  .mios-cursor__reticle{
+    position:absolute;left:0;top:0;
+    width:32px;height:32px;
+    transform:translate(-50%,-50%);
+    background:
+      linear-gradient(currentColor,currentColor) center top / 1px 7px,
+      linear-gradient(currentColor,currentColor) center bottom / 1px 7px,
+      linear-gradient(currentColor,currentColor) left center / 7px 1px,
+      linear-gradient(currentColor,currentColor) right center / 7px 1px;
+    background-repeat:no-repeat;
+    filter:drop-shadow(0 0 1px #060806) drop-shadow(0 0 3px rgba(var(--mios-accent-rgb), .5));
+    transition:width .16s ease, height .16s ease;
+  }
+  .mios-cursor__reticle::after{
+    content:"";
+    position:absolute;left:50%;top:50%;
+    width:3px;height:3px;
+    background:currentColor;
+    transform:translate(-50%,-50%);
+  }
+  .mios-cursor.is-hovering .mios-cursor__reticle{width:26px;height:26px;}
+  .mios-cursor.is-pressed .mios-cursor__reticle{width:22px;height:22px;}
+
+  /* Hide the system pointer only while the replacement is visible. */
+  @media (hover:hover) and (pointer:fine){
+    html.mios-cursor-active, html.mios-cursor-active *{cursor:none !important;}
+  }
+  @media (hover:none), (pointer:coarse){
+    .mios-cursor{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .mios-cursor__reticle{transition:none;}
+  }
+
+/* MIOS CROSSHAIR IMPACT — decorative only; never captures clicks. */
+.mios-impact {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+  z-index: 2147483646;
+  transform: translate(-50%, -50%);
+  color: var(--neon);
+  contain: layout style;
+}
+.mios-impact__flash {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.94) 0%, rgba(var(--mios-accent-rgb), .7) 26%, rgba(var(--mios-accent-rgb), 0) 72%);
+  animation: mios-impact-flash 330ms ease-out both;
+}
+.mios-impact__ring {
+  position: absolute;
+  inset: 19px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(var(--mios-accent-rgb), .65);
+  animation: mios-impact-ring 400ms ease-out both;
+}
+.mios-impact__spark {
+  position: absolute;
+  left: calc(50% - 1px);
+  top: calc(50% - 5px);
+  width: 2px;
+  height: 10px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow: 0 0 5px rgba(var(--mios-accent-rgb), .8);
+  transform: rotate(var(--angle));
+  animation: mios-impact-spark 400ms cubic-bezier(.12,.6,.3,1) both;
+}
+.mios-impact.is-red {
+  color: #ff4646;
+}
+.mios-impact.is-red .mios-impact__flash {
+  background: radial-gradient(circle, rgba(255,226,226,.96) 0%, rgba(255,70,70,.72) 28%, rgba(255,70,70,0) 74%);
+}
+.mios-impact.is-red .mios-impact__ring {
+  box-shadow: 0 0 8px rgba(255,70,70,.72);
+}
+.mios-impact.is-red .mios-impact__spark {
+  box-shadow: 0 0 5px rgba(255,70,70,.88);
+}
+@keyframes mios-impact-flash {
+  0% { opacity: 1; transform: scale(.35); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@keyframes mios-impact-ring {
+  0% { opacity: .95; transform: scale(.35); }
+  100% { opacity: 0; transform: scale(2); }
+}
+@keyframes mios-impact-spark {
+  0% { opacity: 1; transform: rotate(var(--angle)) translateY(-5px) scaleY(.8); }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateY(-29px) scaleY(.35); }
+}
+@media (hover:none), (pointer:coarse) { .mios-impact { display:none; } }
+@media (prefers-reduced-motion:reduce) { .mios-impact { display:none; } }
+
+/* MIOS CURSOR STYLES END */
+
+/* MIOS SCROLL PROGRESS STYLES START */
+      /* A compact health-bar HUD floats just below the navigation. */
+      .mios-scroll-progress {
+        --mios-health-rgb: 255, 77, 77;
+        position: fixed;
+        top: 84px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 172px;
+        height: 19px;
+        padding: 5px 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 14;
+        pointer-events: none;
+        border: 1px solid rgba(var(--mios-accent-rgb), 0.24);
+        border-radius: 2px;
+        background: rgba(6, 8, 6, 0.8);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      }
+      .mios-scroll-progress[hidden] { display: none; }
+      .mios-scroll-progress__health {
+        flex: 0 0 7px;
+        width: 7px;
+        height: 7px;
+        color: var(--neon);
+        opacity: 0.72;
+        background:
+          linear-gradient(currentColor, currentColor) center / 7px 1px,
+          linear-gradient(currentColor, currentColor) center / 1px 7px;
+        background-repeat: no-repeat;
+      }
+      .mios-scroll-progress__meter {
+        flex: 1;
+        height: 5px;
+        position: relative;
+        overflow: hidden;
+        background: rgba(var(--mios-accent-rgb), 0.1);
+        box-shadow: 0 0 6px rgba(var(--mios-accent-rgb), 0.12);
+      }
+      .mios-scroll-progress__meter::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(90deg,
+          transparent 0,
+          transparent calc(10% - 1px),
+          rgba(6, 8, 6, 0.9) calc(10% - 1px),
+          rgba(6, 8, 6, 0.9) 10%);
+      }
+      .mios-scroll-progress__fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: rgb(var(--mios-health-rgb));
+        transform: scaleX(0);
+        transform-origin: left center;
+      }
+      @media (max-width: 700px) {
+        .mios-scroll-progress {
+          top: 78px;
+          width: 148px;
+        }
+      }
+/* MIOS SCROLL PROGRESS STYLES END */
+
+/* MIOS STUDIO EFFECTS STYLES START */
+      /* Selected navigation items use compact game-menu brackets. */
+      .navlinks a { position: relative; }
+      .navlinks a::before,
+      .navlinks a::after {
+        content: "";
+        position: absolute;
+        top: -6px;
+        bottom: -6px;
+        width: 5px;
+        border-top: 1px solid var(--neon);
+        border-bottom: 1px solid var(--neon);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+      }
+      .navlinks a::before {
+        left: -10px;
+        border-left: 1px solid var(--neon);
+        transform: translateX(-3px);
+      }
+      .navlinks a::after {
+        right: -10px;
+        border-right: 1px solid var(--neon);
+        transform: translateX(3px);
+      }
+      .navlinks a.is-current {
+        color: var(--neon);
+        text-shadow: 0 0 10px rgba(var(--mios-accent-rgb), 0.2);
+      }
+      .navlinks a.is-current::before,
+      .navlinks a.is-current::after {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      /* Target corners sit above the cover and never capture pointer input. */
+      .game { position: relative; }
+      .game::after {
+        content: "";
+        position: absolute;
+        inset: 10px;
+        z-index: 5;
+        color: var(--neon);
+        pointer-events: none;
+        opacity: 0;
+        transform: scale(0.97);
+        background:
+          linear-gradient(currentColor, currentColor) left top / 16px 1px,
+          linear-gradient(currentColor, currentColor) left top / 1px 16px,
+          linear-gradient(currentColor, currentColor) right top / 16px 1px,
+          linear-gradient(currentColor, currentColor) right top / 1px 16px,
+          linear-gradient(currentColor, currentColor) left bottom / 16px 1px,
+          linear-gradient(currentColor, currentColor) left bottom / 1px 16px,
+          linear-gradient(currentColor, currentColor) right bottom / 16px 1px,
+          linear-gradient(currentColor, currentColor) right bottom / 1px 16px;
+        background-repeat: no-repeat;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .game:hover::after,
+      .game:focus-visible::after {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .game-unreleased.is-unavailable::after { color: #ff4646; }
+
+      /* These classes are added only after an observer is ready. */
+      .mios-reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        transition: opacity 0.45s ease, transform 0.45s ease;
+      }
+      .mios-reveal.is-revealed,
+      .mios-reveal:focus-within {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .mios-secret-toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 60;
+        width: min(310px, calc(100vw - 32px));
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 17px 18px;
+        border: 1px solid var(--bright);
+        border-left: 2px solid var(--neon);
+        background: rgba(6, 8, 6, 0.96);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(var(--mios-accent-rgb), 0.07);
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .mios-secret-toast[hidden] { display: none; }
+      .mios-secret-toast.is-visible { opacity: 1; transform: translateY(0); }
+      .mios-secret-toast__badge {
+        display: grid;
+        place-items: center;
+        flex: 0 0 32px;
+        height: 32px;
+        border: 1px solid var(--bright);
+        color: var(--neon);
+        font-size: 18px;
+      }
+      .mios-secret-toast__eyebrow {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--muted);
+        font: 700 8px monospace;
+        letter-spacing: 0.13em;
+      }
+      .mios-secret-toast strong {
+        display: block;
+        color: var(--neon);
+        font: 700 12px monospace;
+        letter-spacing: 0.08em;
+      }
+      .mios-secret-toast__detail {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      @media (max-width: 700px) {
+        .mios-secret-toast { right: 16px; bottom: 16px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .navlinks a::before,
+        .navlinks a::after,
+        .game::after,
+        .mios-secret-toast { transition: none; }
+        .mios-reveal { opacity: 1; transform: none; transition: none; }
+      }
+/* MIOS STUDIO EFFECTS STYLES END */
+
+/* MIOS OPTIONS STYLES START */
+      .mios-options-toggle,
+      .mios-options-panel {
+        position: fixed;
+        left: 20px;
+        z-index: 80;
+        border: 1px solid var(--bright);
+        background: rgba(6, 8, 6, 0.96);
+        color: var(--text);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+      }
+      .mios-options-toggle {
+        bottom: 20px;
+        height: 36px;
+        padding: 0 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font: 700 10px monospace;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+      .mios-options-toggle svg { width: 15px; height: 15px; color: var(--neon); }
+      .mios-options-toggle:hover,
+      .mios-options-toggle[aria-expanded="true"] { border-color: var(--neon); color: var(--neon); }
+      .mios-options-panel {
+        bottom: 64px;
+        width: min(304px, calc(100vw - 32px));
+        max-height: calc(100vh - 90px);
+        max-height: calc(100dvh - 90px);
+        overflow-y: auto;
+        padding: 17px;
+        border-top: 2px solid var(--neon);
+      }
+      .mios-options-toggle[hidden],
+      .mios-options-panel[hidden] { display: none; }
+      .mios-options-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .mios-options-heading strong { font: 700 12px monospace; letter-spacing: 0.12em; }
+      .mios-options-close {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid var(--bright);
+        background: transparent;
+        color: var(--muted);
+        font: 20px/1 Arial, sans-serif;
+        cursor: pointer;
+      }
+      .mios-options-close:hover { color: var(--neon); border-color: var(--neon); }
+      .mios-option-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 0; border-bottom: 1px solid var(--border); }
+      .mios-option-row:last-child { padding-bottom: 3px; border-bottom: 0; }
+      .mios-option-label { display: block; color: var(--text); font: 700 10px monospace; letter-spacing: 0.06em; }
+      .mios-option-note { display: block; margin-top: 6px; color: var(--muted); font: 11px/1.5 Arial, sans-serif; }
+      .mios-option-switch {
+        flex: 0 0 46px;
+        min-height: 29px;
+        padding: 4px;
+        border: 1px solid var(--bright);
+        background: transparent;
+        color: var(--muted);
+        font: 700 9px monospace;
+        cursor: pointer;
+      }
+      .mios-option-switch[aria-checked="true"] { color: var(--neon); border-color: var(--dark, #087a03); background: rgba(var(--mios-accent-rgb), 0.07); }
+      .mios-option-switch:disabled { opacity: 0.55; cursor: not-allowed; }
+      .mios-options-toggle:focus-visible,
+      .mios-options-close:focus-visible,
+      .mios-option-switch:focus-visible { outline: 2px solid var(--neon); outline-offset: 4px; }
+      html.mios-native-cursor .mios-cursor { display: none !important; }
+      html.mios-reduce-motion { scroll-behavior: auto !important; }
+      html.mios-reduce-motion *,
+      html.mios-reduce-motion *::before,
+      html.mios-reduce-motion *::after { animation: none !important; transition: none !important; }
+      html.mios-reduce-motion .mios-reveal { opacity: 1 !important; transform: none !important; }
+      html.mios-reduce-motion .game:hover,
+      html.mios-reduce-motion .contact-card:hover,
+      html.mios-reduce-motion .game:hover .game-image,
+      html.mios-reduce-motion .mios-secret-toast { transform: none !important; }
+      html.mios-reduce-motion .game:hover .symbol { transform: translate(-50%, -50%) !important; }
+      .signal[role="button"] { touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+      .signal[role="button"]:focus-visible { outline: 1px solid var(--neon); outline-offset: 9px; }
+      .mios-radar-wave { position: absolute; inset: 0; border: 1px solid var(--neon); border-radius: 50%; opacity: 0; transform: scale(0.15); pointer-events: none; }
+      .signal.is-scanning .mios-radar-wave { animation: mios-radar-scan 0.82s ease-out both; }
+      .signal.is-scanning .mios-radar-wave--delayed { animation-delay: 0.13s; }
+      .signal.is-scan-static { border-color: var(--neon); box-shadow: 0 0 15px rgba(var(--mios-accent-rgb), 0.12); }
+      @keyframes mios-radar-scan {
+        0% { opacity: 0.7; transform: scale(0.15); }
+        70% { opacity: 0.22; }
+        100% { opacity: 0; transform: scale(1.08); }
+      }
+
+      .mios-radar-nav {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        pointer-events: none;
+      }
+      .mios-radar-node {
+        --size: 18px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: var(--size);
+        height: var(--size);
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--neon);
+        pointer-events: auto;
+        cursor: pointer;
+        transform: translate(-50%, -50%);
+        transition: filter 0.2s ease, transform 0.2s ease;
+      }
+      .mios-radar-node::before,
+      .mios-radar-node::after {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+      }
+      .mios-radar-node::before {
+        width: 8px;
+        height: 8px;
+        background: currentColor;
+        box-shadow: 0 0 10px rgba(var(--mios-accent-rgb), 0.88), 0 0 18px rgba(var(--mios-accent-rgb), 0.35);
+        animation: mios-radar-blip 1.7s ease-in-out infinite;
+      }
+      .mios-radar-node::after {
+        width: 18px;
+        height: 18px;
+        border: 1px solid rgba(var(--mios-accent-rgb), 0.34);
+        animation: mios-radar-ring 1.7s ease-out infinite;
+      }
+      .mios-radar-node:hover,
+      .mios-radar-node:focus-visible,
+      .mios-radar-node.is-current {
+        filter: drop-shadow(0 0 10px rgba(var(--mios-accent-rgb), 0.55));
+      }
+      .mios-radar-node:hover::before,
+      .mios-radar-node:focus-visible::before,
+      .mios-radar-node.is-current::before {
+        width: 10px;
+        height: 10px;
+      }
+      .mios-radar-node:hover::after,
+      .mios-radar-node:focus-visible::after,
+      .mios-radar-node.is-current::after {
+        border-color: rgba(var(--mios-accent-rgb), 0.62);
+      }
+      .mios-radar-node:focus-visible {
+        outline: 2px solid rgba(var(--mios-accent-rgb), 0.85);
+        outline-offset: 4px;
+      }
+      .mios-radar-node__label {
+        position: absolute;
+        left: calc(100% + 9px);
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(232, 244, 232, 0.82);
+        font: 700 8px monospace;
+        letter-spacing: 0.14em;
+        white-space: nowrap;
+        opacity: 0.88;
+        text-shadow: 0 0 10px rgba(6, 8, 6, 0.9);
+      }
+      .mios-radar-tooltip {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 13px);
+        min-width: 160px;
+        max-width: 190px;
+        padding: 11px 12px;
+        border: 1px solid rgba(var(--mios-accent-rgb), 0.36);
+        background: rgba(6, 8, 6, 0.94);
+        color: var(--text);
+        text-align: left;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.36);
+        pointer-events: none;
+        visibility: hidden;
+        opacity: 0;
+        transform: translateX(-50%) scale(0.96);
+        transform-origin: bottom center;
+        transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+      }
+      .mios-radar-node:hover .mios-radar-tooltip,
+      .mios-radar-node:focus-visible .mios-radar-tooltip {
+        visibility: visible;
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+      }
+      .mios-radar-tooltip strong {
+        display: block;
+        color: var(--neon);
+        font: 700 10px monospace;
+        letter-spacing: 0.14em;
+      }
+      .mios-radar-tooltip span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font: 12px/1.45 Arial, Helvetica, sans-serif;
+      }
+      .mios-radar-tooltip em {
+        display: block;
+        margin-top: 7px;
+        color: #c7f5c7;
+        font: 700 8px monospace;
+        letter-spacing: 0.12em;
+        font-style: normal;
+      }
+      @keyframes mios-radar-blip {
+        50% { opacity: 0.45; box-shadow: 0 0 5px rgba(var(--mios-accent-rgb), 0.45), 0 0 10px rgba(var(--mios-accent-rgb), 0.16); }
+      }
+      @keyframes mios-radar-ring {
+        0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.5); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
+      }
+      html.mios-reduce-motion .mios-radar-node::before,
+      html.mios-reduce-motion .mios-radar-node::after {
+        animation: none !important;
+      }
+      html.mios-reduce-motion .mios-radar-tooltip {
+        transition: none !important;
+      }
+      @media (max-width: 700px) {
+        .mios-radar-node__label { display: none; }
+        .mios-radar-tooltip {
+          min-width: 144px;
+          max-width: 160px;
+          padding: 10px;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .mios-options-toggle { left: 16px; bottom: 16px; }
+        .mios-options-panel { left: 16px; bottom: 60px; }
+      }
+/* RESET PROGRESS — OPTIONS */
+.mios-reset-button { flex: 0 0 auto; min-height: 29px; padding: 5px 11px; border: 1px solid #a64747; background: rgba(166,71,71,.08); color: #ff8686; font: 700 9px monospace; letter-spacing: .08em; cursor: pointer; }
+.mios-reset-button:hover, .mios-reset-button:focus-visible { border-color: #ff8686; background: rgba(166,71,71,.18); }
+.mios-reset-overlay[hidden] { display:none; }
+.mios-reset-overlay { position:fixed; inset:0; z-index:200; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.78); backdrop-filter:blur(6px); }
+.mios-reset-dialog { width:min(420px,100%); padding:26px; border:1px solid #a64747; border-top:2px solid #ff8686; background:#0a100c; color:var(--text); box-shadow:0 20px 70px rgba(0,0,0,.7); }
+.mios-reset-eyebrow { display:block; margin-bottom:13px; color:#ff8686; font:700 9px monospace; letter-spacing:.16em; }
+.mios-reset-dialog strong { display:block; font:800 20px Arial,sans-serif; }
+.mios-reset-dialog p { margin:13px 0 24px; color:var(--muted); font:13px/1.7 Arial,sans-serif; }
+.mios-reset-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
+.mios-reset-actions button { min-height:37px; padding:0 13px; border:1px solid var(--bright); color:var(--text); background:transparent; font:700 10px monospace; cursor:pointer; }
+.mios-reset-actions #miosResetConfirm { border-color:#b44f4f; background:#772e2e; color:#fff; }
+.mios-reset-actions button:hover { filter:brightness(1.35); }
+.mios-reset-button:focus-visible, .mios-reset-actions button:focus-visible { outline:2px solid var(--neon); outline-offset:3px; }
+/* MIOS OPTIONS STYLES END */
+
+/* MIOS EXPLORATION HUD STYLES START */
+      .mios-minimap {
+        width: auto;
+        height: auto;
+        max-width: none;
+        margin: 0;
+        position: fixed;
+        top: 50%;
+        right: 16px;
+        transform: translateY(-50%);
+        z-index: 12;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 9px;
+        border: 1px solid var(--bright);
+        background: rgba(6, 8, 6, 0.9);
+      }
+      .mios-minimap__title { color: var(--muted); font: 700 7px monospace; letter-spacing: 0.12em; }
+      .mios-map-link {
+        flex-shrink: 0;
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 25px;
+        height: 25px;
+        border: 1px solid var(--bright);
+        background: var(--bg);
+        color: var(--muted);
+        font: 700 8px monospace;
+      }
+      .mios-map-link + .mios-map-link::before {
+        content: "";
+        position: absolute;
+        top: -13px;
+        left: 50%;
+        height: 12px;
+        border-left: 1px solid var(--bright);
+      }
+      .mios-map-link::after {
+        content: attr(data-map-label);
+        position: absolute;
+        right: calc(100% + 18px);
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 7px 9px;
+        border: 1px solid var(--bright);
+        background: var(--bg);
+        color: var(--text);
+        font: 700 9px monospace;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+      }
+      .mios-map-link:hover::after,
+      .mios-map-link:focus-visible::after { opacity: 1; }
+      .mios-map-link:hover,
+      .mios-map-link.is-current { color: var(--neon); border-color: var(--neon); background: rgba(var(--mios-accent-rgb), 0.09); box-shadow: 0 0 9px rgba(var(--mios-accent-rgb), 0.1); }
+      .mios-journal-dock {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 61;
+        display: flex;
+        gap: 8px;
+      }
+      .mios-journal-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 36px;
+        padding: 0 11px;
+        border: 1px solid var(--bright);
+        background: rgba(6, 8, 6, 0.96);
+        color: var(--muted);
+        font: 700 9px monospace;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+      }
+      .mios-journal-button svg { width: 14px; height: 14px; color: var(--neon); }
+      .mios-journal-button:hover,
+      .mios-journal-button[aria-expanded="true"] { border-color: var(--neon); color: var(--neon); }
+      .mios-journal-count { color: var(--neon); }
+      .mios-journal-panel {
+        position: fixed;
+        right: 20px;
+        bottom: 64px;
+        z-index: 70;
+        width: min(314px, calc(100vw - 32px));
+        max-height: calc(100vh - 92px);
+        max-height: calc(100dvh - 92px);
+        overflow-y: auto;
+        padding: 17px;
+        border: 1px solid var(--bright);
+        border-top: 2px solid var(--neon);
+        background: rgba(6, 8, 6, 0.97);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      }
+      .mios-journal-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .mios-journal-heading strong { color: var(--text); font: 700 12px monospace; letter-spacing: 0.1em; }
+      .mios-journal-caption { margin: 10px 0 4px; color: var(--muted); font: 11px/1.6 Arial, sans-serif; }
+      .mios-journal-list { margin: 0; padding: 0; list-style: none; }
+      .mios-log-row { display: flex; align-items: start; gap: 10px; padding: 15px 0; border-bottom: 1px solid var(--border); }
+      .mios-log-row:last-child { padding-bottom: 3px; border-bottom: 0; }
+      .mios-log-marker { flex: 0 0 14px; width: 14px; height: 14px; margin-top: 1px; border: 1px solid var(--bright); color: var(--neon); text-align: center; font: 700 11px/12px monospace; }
+      .mios-log-copy { flex: 1; min-width: 0; }
+      .mios-log-copy strong { display: block; color: var(--text); font: 700 11px/1.5 Arial, sans-serif; }
+      .mios-log-copy small { display: block; margin-top: 4px; color: var(--muted); font: 10px/1.5 Arial, sans-serif; }
+      .mios-log-state { flex: 0 0 auto; margin-top: 3px; color: var(--muted); font: 700 7px monospace; letter-spacing: 0.05em; }
+      .mios-log-row.is-complete .mios-log-state,
+      .mios-log-row.is-complete .mios-log-copy strong { color: var(--neon); }
+      .mios-log-row.is-complete .mios-log-marker { border-color: var(--dark, #087a03); background: rgba(var(--mios-accent-rgb), 0.08); }
+      .mios-minimap[hidden],
+      .mios-journal-dock[hidden],
+      .mios-journal-button[hidden],
+      .mios-journal-panel[hidden] { display: none; }
+      .mios-secret-toast { bottom: 72px; }
+      html.mios-hide-achievements .mios-secret-toast { display: none; }
+      @media (max-width: 700px) {
+        .mios-minimap { right: 8px; padding: 8px 6px; gap: 10px; }
+        .mios-map-link { width: 21px; height: 21px; font-size: 7px; }
+        .mios-map-link + .mios-map-link::before { top: -11px; height: 10px; }
+        .mios-journal-dock { right: 16px; bottom: 16px; gap: 6px; }
+        .mios-journal-button { padding: 0 9px; gap: 6px; }
+        .mios-journal-button__label { display: none; }
+        .mios-journal-panel { right: 16px; bottom: 60px; }
+      }
+      @media (max-height: 480px) {
+        .mios-minimap { top: auto; bottom: 68px; right: 16px; transform: none; flex-direction: row; gap: 8px; padding: 7px 8px; }
+        .mios-map-link + .mios-map-link::before { top: 50%; left: -9px; width: 8px; height: 0; border-left: 0; border-top: 1px solid var(--bright); }
+      }
+/* MIOS EXPLORATION HUD STYLES END */
+
+/* MIOSSOFT GAME SYSTEMS */
+.mios-game-entry{min-width:0;display:flex;flex-direction:column}
+.mios-game-entry>.game{display:block;flex:1}
+.mios-card-actions{padding:12px 14px;border:1px solid var(--bright);border-top:0;background:var(--surface)}
+.mios-card-actions .mios-game-action{width:100%;text-align:left}
+.mios-collection-actions{margin-top:15px}
+.mios-game-entry:last-child{grid-column:auto}
+@media (max-width:900px) and (min-width:701px){.mios-game-entry:last-child{grid-column:auto}}
+
+.mios-profile{position:fixed;left:20px;top:85px;z-index:13;width:205px;padding:11px 12px;border:1px solid var(--bright);background:rgba(6,8,6,.92);font:10px monospace;box-shadow:0 5px 22px #0007}
+.mios-profile-head{display:flex;justify-content:space-between;gap:8px;color:var(--neon);font-weight:700}
+.mios-xp-track{height:5px;background:#17301a;margin-top:9px;overflow:hidden}
+.mios-xp-fill{height:100%;width:0%;background:var(--neon);transition:width .45s}
+.mios-xp-info{margin-top:6px;color:var(--muted)}
+.mios-studio-status{position:fixed;left:20px;top:158px;z-index:34;font:700 9px monospace;letter-spacing:.08em;color:#86ae89}
+.mios-studio-status i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 7px var(--neon);margin-right:7px}
+.mios-toast{position:fixed;left:50%;top:95px;transform:translate(-50%,-12px);z-index:100;opacity:0;pointer-events:none;max-width:calc(100vw - 30px);min-width:220px;text-align:center;padding:13px 20px;border:1px solid var(--neon);background:rgba(6,8,6,.97);color:var(--neon);font:700 11px monospace;letter-spacing:.1em;transition:opacity .2s,transform .2s}
+.mios-toast.show{opacity:1;transform:translate(-50%,0)}
+.mios-info-actions{margin:22px 0 0;display:flex;gap:10px;flex-wrap:wrap}
+.mios-game-action,.mios-waypoint,.mios-codex-open{border:1px solid var(--bright);background:#0a120c;color:var(--neon);font:700 10px monospace;padding:10px 12px;letter-spacing:.05em;cursor:pointer}
+.mios-game-action:hover,.mios-waypoint:hover,.mios-codex-open:hover{border-color:var(--neon);background:#112318}
+.mios-game-action:focus-visible,.mios-waypoint:focus-visible,.mios-codex-open:focus-visible{outline:2px solid var(--neon);outline-offset:3px}
+.mios-briefing{border:1px solid var(--bright);background:rgba(6,8,6,.98);color:var(--text);padding:25px;max-width:min(540px,calc(100vw - 30px));width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 25px 80px #000b}
+.mios-briefing::backdrop{background:rgba(0,0,0,.8);backdrop-filter:blur(3px)}
+.mios-briefing h3{font:900 27px Impact,Arial,sans-serif;margin:10px 0 16px}
+.mios-briefing p,.mios-briefing li{color:#afc0b0;font:14px/1.6 Arial,sans-serif}
+.mios-briefing .mios-meta{color:var(--neon);font:700 10px monospace;letter-spacing:.1em}
+.mios-briefing-close{float:right;border:1px solid var(--bright);background:transparent;color:var(--text);padding:6px 11px;cursor:pointer}
+.mios-waypoint{margin-left:10px;padding:6px 8px;flex-shrink:0}
+.mios-targeted{outline:2px solid var(--neon)!important;outline-offset:4px}
+.mios-interact-hint{position:fixed;z-index:75;pointer-events:none;background:#061006;color:var(--neon);border:1px solid var(--bright);padding:5px 8px;font:700 9px monospace;opacity:0;transition:opacity .13s}
+.mios-interact-hint.show{opacity:1}
+.mios-transition{position:fixed;inset:0;z-index:85;pointer-events:none;background:rgba(3,10,4,.7);display:grid;place-items:center;color:var(--neon);font:700 12px monospace;letter-spacing:.22em;opacity:0;transition:opacity .18s}
+.mios-transition.show{opacity:1}
+.mios-codex-open{display:block;width:100%;max-width:560px;margin-top:14px;text-align:center}
+/* Only decorative game HUD elements are optional. Project and studio details remain accessible. */
+html.mios-hide-gameextras .mios-profile,html.mios-hide-gameextras .mios-studio-status,html.mios-hide-gameextras .mios-waypoint{display:none!important}
+html.mios-hide-gameextras .mios-toast,html.mios-hide-gameextras .mios-interact-hint,html.mios-hide-gameextras .mios-transition{display:none!important}
+@media(max-width:700px){.mios-scroll-progress{top:76px;width:142px}.mios-profile{left:10px;top:110px;width:135px;padding:8px 9px}.mios-studio-status{display:none}.mios-profile-head,.mios-xp-info{font-size:8px;line-height:1.35}.mios-profile-head{flex-wrap:wrap}.mios-xp-track{margin-top:7px}.mios-briefing{padding:18px}}
+@media(prefers-reduced-motion:reduce){.mios-toast,.mios-transition,.mios-xp-fill,.mios-interact-hint{transition:none!important}}
+
+
+/* MIOS MOBILE TRANSLATION-SAFE LAYOUT START */
+/* Keep long browser-translated headings inside the phone viewport. */
+#contact .inner { min-width: 0; }
+#contact h2,
+#contact h2 em {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+}
+#contact h2 em { display: block; }
+@media (max-width: 700px) {
+  #contact .inner { padding-inline: 22px; }
+  #contact h2 {
+    font-size: clamp(29px, 8.2vw, 52px);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+  }
+  #contact h2 em { -webkit-text-stroke-width: 0.6px; }
+  #contact .contact-lead { font-size: clamp(14px, 3.6vw, 17px); overflow-wrap: anywhere; }
+  #contact .contact-card { min-width: 0; }
+  .mios-minimap { right: 8px; }
+}
+@media (max-width: 380px) {
+  #contact h2 { font-size: clamp(26px, 7.6vw, 34px); }
+}
+/* MIOS MOBILE TRANSLATION-SAFE LAYOUT END */
+
+
+/* MOBILE HUD: compact level panel to the left of the health bar */
+@media (max-width: 700px) {
+  .mios-profile {
+    left: 10px;
+    right: auto;
+    top: 76px;
+    width: min(136px, calc((100vw - 30px) / 2));
+    padding: 6px 7px;
+    z-index: 13;
+    box-sizing: border-box;
+  }
+  .mios-profile-head { font-size: 7px; gap: 2px 4px; flex-wrap: wrap; }
+  .mios-xp-track { margin-top: 5px; height: 4px; }
+  .mios-xp-info { font-size: 7px; line-height: 1.25; margin-top: 4px; overflow-wrap: anywhere; }
+  .mios-scroll-progress {
+    left: auto;
+    right: 10px;
+    top: 76px;
+    transform: none;
+    width: min(142px, calc((100vw - 30px) / 2));
+    box-sizing: border-box;
+  }
+}
+
+/* MIOS SAFE MOTION — animations are visual only; no layout or fixed-HUD movement */
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.mios-reduce-motion) .mios-motion-heading.mios-motion-visible {
+    animation: mios-safe-title .7s cubic-bezier(.18,.75,.22,1) both;
+  }
+  html:not(.mios-reduce-motion) .mios-motion-card.mios-motion-visible {
+    animation: mios-safe-card .52s ease-out both;
+  }
+  html:not(.mios-reduce-motion) .mios-motion-button {
+    isolation:isolate;
+  }
+  /* Scan uses an inset box-shadow: fixed-position buttons retain their layout. */
+  @media (hover:hover) and (pointer:fine) {
+    html:not(.mios-reduce-motion) .mios-motion-button:hover {
+      animation: mios-safe-border .48s ease-out;
+    }
+    html:not(.mios-reduce-motion) .mios-motion-button:hover b,
+    html:not(.mios-reduce-motion) .mios-motion-button:hover svg {
+      translate: 3px 0;
+    }
+  }
+  html:not(.mios-reduce-motion) .mios-motion-button b,
+  html:not(.mios-reduce-motion) .mios-motion-button svg {
+    transition: translate .2s ease;
+  }
+  html:not(.mios-reduce-motion) .mios-motion-button.mios-motion-clicked {
+    animation: mios-safe-click .16s ease-out;
+  }
+  html:not(.mios-reduce-motion) .mios-scroll-progress.mios-motion-boot .mios-scroll-progress__meter,
+  html:not(.mios-reduce-motion) .mios-profile.mios-motion-boot .mios-xp-track {
+    animation: mios-safe-hud .7s ease-out;
+  }
+  html:not(.mios-reduce-motion) .mios-journal-button.mios-motion-quest-flash {
+    animation: mios-safe-quest .8s ease-out;
+  }
+  html:not(.mios-reduce-motion) .signal .mios-motion-sonar {
+    display:block;
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background: conic-gradient(from 0deg, transparent 0deg, transparent 290deg, rgba(var(--mios-accent-rgb), .055) 330deg, transparent 360deg);
+    animation: mios-safe-sonar 14s linear infinite;
+    pointer-events:none;
+    z-index:0;
+  }
+  html:not(.mios-reduce-motion) .mios-motion-typing.mios-motion-visible {
+    animation: mios-safe-title .55s steps(14,end) both;
+  }
+  html:not(.mios-reduce-motion) .mios-motion-glitch {
+    animation: mios-safe-glitch .36s steps(2,end) both;
+  }
+}
+@keyframes mios-safe-title {
+  from { clip-path:inset(0 100% 0 0); opacity:.7; }
+  to { clip-path:inset(0 0 0 0); opacity:1; }
+}
+@keyframes mios-safe-card {
+  from {opacity:.25; filter:brightness(.85);}
+  to {opacity:1; filter:brightness(1);}
+}
+@keyframes mios-safe-border {
+  0%{box-shadow:inset 0 0 0 0 rgba(var(--mios-accent-rgb), 0)}
+  50%{box-shadow:inset 0 0 0 1px rgba(var(--mios-accent-rgb), .7)}
+  100%{box-shadow:inset 0 0 0 1px rgba(var(--mios-accent-rgb), 0)}
+}
+@keyframes mios-safe-click {
+  0%,100% {filter:brightness(1)}
+  45% {filter:brightness(1.35)}
+}
+@keyframes mios-safe-hud {
+  from {opacity:.25;filter:brightness(.8)}
+  to {opacity:1;filter:brightness(1)}
+}
+@keyframes mios-safe-quest {
+  0%,100%{filter:none}
+  45%{filter:drop-shadow(0 0 7px rgba(var(--mios-accent-rgb), .7))}
+}
+@keyframes mios-safe-sonar {to{rotate:360deg}}
+@keyframes mios-safe-glitch {
+  0%{text-shadow:2px 0 var(--neon)}
+  35%{text-shadow:-2px 0 var(--neon)}
+  100%{text-shadow:none}
+}
+/* Reduced Motion and disabled site motion must not conceal headings or cards. */
+html.mios-reduce-motion .mios-motion-sonar { display:none!important; }
+@media (prefers-reduced-motion:reduce) {
+  .mios-motion-sonar {display:none!important;}
+  .mios-motion-heading,.mios-motion-card,.mios-motion-typing {animation:none!important;opacity:1!important;clip-path:none!important;filter:none!important;}
+}
+/* MIOS SAFE MOTION END */
+
+
+/* MIOS HUD POSITION LOCK — layout-only fix, no dynamic viewport arithmetic. */
+@media (max-width: 900px), (pointer: coarse) {
+  .mios-options-toggle { position: fixed !important; left: 16px !important; bottom: 16px !important; top: auto !important; right: auto !important; transform: none !important; translate: none !important; }
+  .mios-options-panel { position: fixed !important; left: 16px !important; bottom: 60px !important; top: auto !important; transform: none !important; }
+  .mios-journal-dock { position: fixed !important; right: 16px !important; bottom: 16px !important; top: auto !important; left: auto !important; transform: none !important; translate: none !important; }
+  .mios-journal-panel { position: fixed !important; right: 16px !important; bottom: 60px !important; top: auto !important; }
+  .mios-secret-toast { bottom: 72px; }
+  .mios-minimap { position: fixed !important; right: 8px !important; left: auto !important; top: 50% !important; bottom: auto !important; transform: translateY(-50%) !important; translate: none !important; }
+}
+@media (max-width: 700px), (max-height: 480px) {
+  .mios-minimap { top: auto !important; bottom: 68px !important; transform: none !important; }
+}
+/* No positional or recurring animation should be applied to fixed HUD containers. */
+.mios-options-toggle,
+.mios-journal-dock,
+.mios-minimap,
+.mios-profile,
+.mios-scroll-progress { animation: none !important; transition-property: background-color, border-color, color, box-shadow !important; }
+.mios-options-toggle.mios-motion-button,
+.mios-journal-button.mios-motion-button { animation: none !important; }
+/* Keep the one-time quest feedback and progress-fill animations only on their inner parts. */
+
+
+/* MOBILE BREATHING FIX: yatay taşmayı kes (fixed elemanlar nefes alıyordu) */
+html, body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+.signal { contain: paint; }
+@media (max-width: 700px) {
+  .mios-radar-tooltip { display: none; }
+  .mios-radar-node:focus-visible .mios-radar-tooltip { display: block; }
+}
+
+/* RADAR TOOLTIP PORTAL — keeps radar paint containment but displays
+   explanations above it, without cropping or changing page layout. */
+.signal .mios-radar-tooltip { visibility: hidden !important; opacity: 0 !important; }
+.mios-radar-tooltip.mios-tooltip-portal {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: auto;
+  z-index: 2147483000;
+  display: block;
+  width: 178px;
+  min-width: 0;
+  max-width: min(190px, calc(100vw - 24px));
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%);
+  transition: none;
+  pointer-events: none;
+}
+.mios-radar-tooltip.mios-tooltip-portal[hidden] { display: none !important; }
+@media (max-width: 700px) {
+  .mios-radar-tooltip.mios-tooltip-portal { display: block; width: 160px; }
+}
+
+/* MIOS CLOSE BUTTON HOVER — visual feedback only, no position change. */
+.mios-briefing-close,
+.mios-options-close,
+.mios-journal-heading [data-close-journal] {
+  transition: color .18s ease, border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+.mios-briefing-close:hover,
+.mios-briefing-close:focus-visible,
+.mios-options-close:hover,
+.mios-options-close:focus-visible,
+.mios-journal-heading [data-close-journal]:hover,
+.mios-journal-heading [data-close-journal]:focus-visible {
+  color: var(--neon);
+  border-color: var(--neon);
+  background-color: rgba(var(--mios-accent-rgb), .10);
+  box-shadow: 0 0 12px rgba(var(--mios-accent-rgb), .17);
+}
+.mios-briefing-close:focus-visible,
+.mios-options-close:focus-visible,
+.mios-journal-heading [data-close-journal]:focus-visible {
+  outline: 2px solid var(--neon);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mios-briefing-close,
+  .mios-options-close,
+  .mios-journal-heading [data-close-journal] {transition: none;}
+}
+
+/* MIOS OPTIONS: health visibility and bulk controls */
+html.mios-hide-health .mios-scroll-progress { display: none !important; }
+.mios-options-bulk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin: 15px 0 4px; }
+.mios-options-bulk button { min-width: 0; min-height: 38px; padding: 8px 6px; border: 1px solid var(--bright); background: rgba(var(--mios-accent-rgb), 0.045); color: var(--text); font: 700 10px monospace; letter-spacing: .06em; cursor: pointer; }
+.mios-options-bulk button:hover, .mios-options-bulk button:focus-visible { color: var(--neon); border-color: var(--neon); }
+.mios-options-bulk #miosDisableAll { color: #ff9898; border-color: #703939; background: rgba(155, 60, 60, .07); }
+.mios-options-bulk #miosDisableAll:hover, .mios-options-bulk #miosDisableAll:focus-visible { border-color: #ff9898; }
+
+/* MIOSSOFT APPEARANCE MODES — palette overrides, no filter on the document. */
+html[data-mios-theme="mono"] {
+  color-scheme: dark;
+  --bg: #050505; --bg2: #0e0e0e; --surface: #151515;
+  --border: #333333; --bright: #777777; --neon: #f0f0f0;
+  --dark: #b0b0b0; --text: #f4f4f4; --muted: #aaa;
+  --mios-panel: rgba(8,8,8,.97);
+  --mios-accent-rgb: 240, 240, 240;
+  --mios-button-ink: #080808;
+}
+html[data-mios-theme="classic-dark"] {
+  color-scheme: dark;
+  --bg: #0b0d11; --bg2: #12151b; --surface: #181c23;
+  --border: #2d333d; --bright: #565e6d; --neon: #d4dae4;
+  --dark: #9aa7b8; --text: #f1f3f6; --muted: #a3acb9;
+  --mios-panel: rgba(15,18,24,.97);
+  --mios-accent-rgb: 212, 218, 228;
+  --mios-button-ink: #11151b;
+}
+html[data-mios-theme="classic-light"] {
+  color-scheme: light;
+  --bg: #f5f5f3; --bg2: #eaeae7; --surface: #ffffff;
+  --border: #d1d1cb; --bright: #aaa9a3; --neon: #24272b;
+  --dark: #4f5459; --text: #1b1e22; --muted: #5a616a;
+  --mios-panel: rgba(255,255,255,.98);
+  --mios-accent-rgb: 36, 39, 43;
+  --mios-button-ink: #fff;
+}
+/* Opaque panels: override original dark-only colors while retaining fixed positioning. */
+html[data-mios-theme]:not([data-mios-theme="neon"]) header,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-options-toggle,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-options-panel,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-minimap,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-journal-button,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-journal-panel,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-profile,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-briefing,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-toast,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-secret-toast,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-reset-dialog,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-scroll-progress,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-radar-tooltip {
+  background: var(--mios-panel);
+  color: var(--text);
+}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .navlinks {
+  background-color: var(--mios-panel);
+}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-card-actions,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-game-action,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-waypoint,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-codex-open,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-map-link,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-interact-hint,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-radar-node__label,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .scrim,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .cover.has-image .scrim {
+  color: var(--text);
+}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-game-action,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-waypoint,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-codex-open,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-interact-hint,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .cover.has-image .scrim {
+  background: var(--surface);
+}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .btn:not(.primary) {color: var(--text);}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .btn.primary {color: var(--mios-button-ink);}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .cover,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .cover.has-image .game-image {
+  background: var(--bg2);
+}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-briefing p,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-briefing li,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .hero-copy > p,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .scrim p,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .contact-lead,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .about-body > p:not(.lead) {color:var(--muted);}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-xp-track {background: var(--border);}
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-cursor,
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-impact {color:var(--neon);}
+/* Semantic unreleased / dangerous red is retained in classic modes. Monochrome is strictly grayscale. */
+html[data-mios-theme]:not([data-mios-theme="mono"]) .mios-cursor.is-game-unreleased,
+html[data-mios-theme]:not([data-mios-theme="mono"]) .mios-impact.is-red {color:#ff4646;}
+html[data-mios-theme="mono"] .mios-cursor.is-game-unreleased,
+html[data-mios-theme="mono"] .mios-impact.is-red {color:#b8b8b8;}
+html[data-mios-theme="mono"] .mios-impact.is-red .mios-impact__flash {background:radial-gradient(circle,#fff 0%,#bbb 28%,transparent 74%);}
+html[data-mios-theme="mono"] .mios-impact.is-red .mios-impact__ring,
+html[data-mios-theme="mono"] .mios-impact.is-red .mios-impact__spark {box-shadow:0 0 8px #aaa;}
+html[data-mios-theme="mono"] .game img,
+html[data-mios-theme="mono"] .founder img {filter:grayscale(1);}
+/* The original infinity studio logo is always neon green in every theme. */
+html[data-mios-theme] .mark {
+  filter: drop-shadow(0 0 12px rgba(16,219,5,.8)) drop-shadow(0 0 36px rgba(16,219,5,.35));
+}
+html[data-mios-theme="mono"] .mios-reset-button,
+html[data-mios-theme="mono"] #miosDisableAll,
+html[data-mios-theme="mono"] #miosResetConfirm,
+html[data-mios-theme="mono"] .game-unreleased.is-unavailable {filter:grayscale(1);}
+/* Light surface overrides and legible glow replacement. */
+html[data-mios-theme="classic-light"] body::before {opacity:.16;}
+html[data-mios-theme="classic-light"] body::after {opacity:.15;}
+html[data-mios-theme="classic-light"] .navlinks a,
+html[data-mios-theme="classic-light"] .platform,
+html[data-mios-theme="classic-light"] .mios-option-switch,
+html[data-mios-theme="classic-light"] .mios-option-note {color:var(--muted);}
+html[data-mios-theme="classic-light"] .scrim {
+  background: linear-gradient(180deg,transparent 28%,rgba(245,245,243,.64) 52%,rgba(245,245,243,.98) 89%);
+}
+html[data-mios-theme="classic-light"] .cover.has-image .scrim {background:var(--surface);}
+html[data-mios-theme="classic-light"] .contact-card:hover {background:#efefed;}
+html[data-mios-theme="classic-light"] .mios-scroll-progress__meter {background:#dededb;}
+html[data-mios-theme="classic-light"] .mios-scroll-progress__meter::after {filter:invert(1);}
+html[data-mios-theme="classic-light"] .mios-scroll-progress__health {color:var(--text);}
+html[data-mios-theme="classic-light"] .mios-reset-overlay {background:rgba(0,0,0,.5);}
+html[data-mios-theme="classic-light"] .mios-options-panel,
+html[data-mios-theme="classic-light"] .mios-journal-panel {box-shadow:0 8px 30px #0002;}
+/* Palette cohesion: no fixed neon-green highlights outside the Neon theme. */
+html[data-mios-theme]:not([data-mios-theme="neon"]) .mios-impact:not(.is-red) .mios-impact__flash {
+  background:radial-gradient(circle,rgba(255,255,255,.85) 0%,rgba(var(--mios-accent-rgb),.65) 28%,rgba(var(--mios-accent-rgb),0) 74%);
+}
+html[data-mios-theme="classic-light"] .mios-nav-theme label {color:#666;}
+/* Navbar appearance selector: four stops, fully visible on narrow phones. */
+.mios-nav-theme {
+  --mios-nav-slider-w: 114px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  flex:0 0 auto;
+  min-width:0;
+  color:var(--text);
+  font:700 9px/1.1 monospace;
+  letter-spacing:.08em;
+}
+.mios-nav-theme label { color:var(--muted); font-size:8px; }
+.mios-nav-theme output { color:var(--neon); font-size:9px; min-width:65px; text-align:center; }
+.mios-nav-theme input[type="range"] {
+  --mios-theme-progress:0%;
+  appearance:none;
+  -webkit-appearance:none;
+  width:var(--mios-nav-slider-w);
+  height:16px;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  cursor:pointer;
+  touch-action:pan-x;
+}
+.mios-nav-theme input[type="range"]::-webkit-slider-runnable-track {
+  height:4px;
+  border:1px solid var(--bright);
+  background:linear-gradient(to right,var(--neon) 0 var(--mios-theme-progress),var(--border) var(--mios-theme-progress) 100%);
+}
+.mios-nav-theme input[type="range"]::-moz-range-track {
+  height:4px;
+  border:1px solid var(--bright);
+  background:var(--border);
+}
+.mios-nav-theme input[type="range"]::-moz-range-progress {height:4px;background:var(--neon);}
+.mios-nav-theme input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance:none;
+  width:12px;height:12px;margin-top:-5px;
+  border:2px solid var(--neon);border-radius:2px;
+  background:var(--bg);box-shadow:0 0 6px rgba(var(--mios-accent-rgb),.24);
+}
+.mios-nav-theme input[type="range"]::-moz-range-thumb {
+  width:10px;height:10px;border:2px solid var(--neon);border-radius:2px;
+  background:var(--bg);box-shadow:0 0 6px rgba(var(--mios-accent-rgb),.24);
+}
+.mios-nav-theme input[type="range"]:focus-visible {outline:2px solid var(--neon);outline-offset:3px;}
+@media (min-width:701px) { .mios-nav-theme {margin-left:auto;margin-right:24px;} }
+@media (max-width:700px) {
+  nav {gap:8px;}
+  .logo {font-size:clamp(12px,3.6vw,17px);letter-spacing:0;white-space:nowrap;}
+  .nav-toggle {flex:0 0 38px;margin-left:auto;}
+  /* The same slider lives below CONTACT inside the opened hamburger menu. */
+  .navlinks .mios-nav-theme {
+    --mios-nav-slider-w: min(220px, 70vw);
+    flex:0 0 auto;
+    align-items:flex-start;
+    align-self:stretch;
+    margin:2px 0 0;
+    padding:18px 0 4px;
+    gap:9px;
+    border-top:1px solid var(--border);
+  }
+  .navlinks .mios-nav-theme label {font-size:9px;}
+  .navlinks .mios-nav-theme output {font-size:10px;text-align:left;}
+  .navlinks .mios-nav-theme input[type="range"] {height:24px;}
+}
+@media (max-width:345px) {
+  nav {padding-left:10px;padding-right:10px;gap:5px;}
+}
+</style>
+  
+<style id="miosPrivacyStyles">
+  .mios-privacy-links {display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;align-items:center;margin:8px 0;}
+  .mios-privacy-link {border:0;background:none;color:var(--text);font:700 11px/1.4 monospace;text-decoration:underline;text-underline-offset:3px;padding:6px 2px;cursor:pointer;}
+  #miosPrivacyBanner[hidden], #miosPrivacyDetails[hidden], .mios-privacy [hidden] {display:none!important;}
+  .mios-privacy {color:var(--text);font:14px/1.5 Arial,Helvetica,sans-serif;text-align:left;letter-spacing:normal;}
+  #miosPrivacyBanner {position:fixed;z-index:2147483100;left:50%;bottom:76px;transform:translateX(-50%);width:min(660px,calc(100% - 28px));max-height:calc(100vh - 100px);max-height:calc(100dvh - 100px);overflow:auto;overscroll-behavior:contain;padding:19px;background:var(--surface,var(--bg));border:1px solid var(--bright);border-top:2px solid var(--neon);box-shadow:0 12px 44px #0008;}
+  .mios-privacy-head {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .mios-privacy .mios-privacy-title {color:var(--neon);font:700 14px/1.4 monospace;letter-spacing:.06em;margin:0;}
+  .mios-privacy p {max-width:none;margin:8px 0;color:var(--text);line-height:1.55;font-size:13px;}
+  .mios-privacy button {font:700 11px/1.4 monospace;letter-spacing:.025em;color:var(--text);background:var(--bg);border:1px solid var(--bright);padding:9px 10px;cursor:pointer;min-height:36px;}
+  .mios-privacy button:hover,.mios-privacy button:focus-visible,.mios-privacy-link:focus-visible {outline:2px solid var(--neon);outline-offset:2px;}
+  .mios-privacy .mios-privacy-lang {min-height:30px;padding:5px 8px;flex:none;}
+  .mios-privacy-actions {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+  .mios-privacy-actions button {min-width:0;min-height:43px;border-color:var(--neon);}
+  .mios-privacy-actions .mios-privacy-wide {grid-column:1/-1;border-color:var(--bright);}
+  .mios-privacy .mios-privacy-inline {padding:4px 0;min-height:26px;background:none;border:none;text-decoration:underline;color:var(--neon);}
+  #miosPrivacyDetails {border-top:1px solid var(--border);margin-top:12px;padding-top:10px;}
+  .mios-privacy-row {display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;}
+  .mios-privacy-row input {width:22px;height:22px;accent-color:var(--neon);flex:none;}
+  .mios-privacy small {color:var(--text);font-size:12px;}
+  #miosPrivacyPolicy {width:min(760px,calc(100% - 26px));max-height:85vh;max-height:85dvh;overflow:auto;padding:22px;color:var(--text);background:var(--surface,var(--bg));border:1px solid var(--bright);border-top:2px solid var(--neon);box-shadow:0 15px 60px #0009;}
+  #miosPrivacyPolicy::backdrop {background:#0009;}
+  #miosPrivacyPolicy h3 {font:700 14px/1.4 monospace;color:var(--neon);margin:18px 0 6px;}
+  #miosPrivacyPolicy a {display:inline;min-width:0;padding:0;border:0;background:none;color:var(--neon);font:inherit;letter-spacing:normal;text-decoration:underline;overflow-wrap:anywhere;box-shadow:none;transform:none;}
+  #miosPrivacyPolicy ul {padding-left:20px;margin:8px 0;font-size:13px;}
+  #miosPrivacyPolicy li {margin:5px 0;overflow-wrap:anywhere;}
+  @media(max-width:600px) {#miosPrivacyBanner {padding:14px;bottom:64px;max-height:calc(100dvh - 80px);} #miosPrivacyPolicy {padding:16px;} }
+  @media(max-height:450px) {#miosPrivacyBanner {bottom:10px;max-height:calc(100dvh - 20px);} }
+</style>
+
+</head>
   <body>
 <header>
   <nav>
@@ -891,6 +2186,12 @@
       translate="no"
       lang="en"
     >MIOSSOFT<span>.</span>GAMES</a>
+
+    <div class="mios-nav-theme" role="group" aria-labelledby="miosNavThemeLabel">
+      <label id="miosNavThemeLabel" for="miosNavThemeSlider">THEME</label>
+      <input id="miosNavThemeSlider" type="range" min="0" max="3" step="1" value="0" aria-describedby="miosNavThemeCurrent" />
+      <output id="miosNavThemeCurrent" for="miosNavThemeSlider" aria-live="polite">NEON</output>
+    </div>
 
     <button
       class="nav-toggle"
@@ -908,6 +2209,27 @@
     </div>
   </nav>
 </header>
+<script>
+// Keep one theme slider: in the navbar on desktop, after CONTACT in the mobile menu.
+(() => {
+  const nav = document.querySelector('header nav');
+  const theme = nav?.querySelector('.mios-nav-theme');
+  const toggle = nav?.querySelector('.nav-toggle');
+  const links = nav?.querySelector('.navlinks');
+  if (!theme || !toggle || !links) return;
+  const mobile = window.matchMedia('(max-width:700px)');
+  function placeTheme() {
+    if (mobile.matches) {
+      if (theme.parentElement !== links) links.appendChild(theme);
+    } else if (theme.parentElement !== nav) {
+      nav.insertBefore(theme, toggle);
+    }
+  }
+  placeTheme();
+  if (mobile.addEventListener) mobile.addEventListener('change', placeTheme);
+  else mobile.addListener(placeTheme);
+})();
+</script>
     <main>
       <section class="hero" id="top">
         <div class="inner hero-grid">
@@ -925,11 +2247,45 @@
               ><a class="btn" href="#contact">GET IN TOUCH</a>
             </div>
           </div>
-          <div class="signal" aria-hidden="true">
+          <div class="signal" role="button" tabindex="0" aria-label="Scan the signal">
             <div class="orbit o1"></div>
             <div class="orbit o2"></div>
             <div class="axis x"></div>
             <div class="axis y"></div>
+            <div class="mios-radar-nav" id="miosRadarNav" aria-label="Radar navigation">
+              <button class="mios-radar-node" type="button" data-target="top" data-angle="-40" data-radius="31" aria-label="HOME — click to travel">
+                <span class="mios-radar-node__label" aria-hidden="true">HOME</span>
+                <span class="mios-radar-tooltip" aria-hidden="true">
+                  <strong>HOME</strong>
+                  <span>Return to the landing sector.</span>
+                  <em>CLICK TO TRAVEL →</em>
+                </span>
+              </button>
+              <button class="mios-radar-node" type="button" data-target="games" data-angle="42" data-radius="33" aria-label="GAMES — click to travel">
+                <span class="mios-radar-node__label" aria-hidden="true">GAMES</span>
+                <span class="mios-radar-tooltip" aria-hidden="true">
+                  <strong>GAMES</strong>
+                  <span>Open the game library.</span>
+                  <em>CLICK TO TRAVEL →</em>
+                </span>
+              </button>
+              <button class="mios-radar-node" type="button" data-target="about" data-angle="137" data-radius="29" aria-label="ABOUT — click to travel">
+                <span class="mios-radar-node__label" aria-hidden="true">ABOUT</span>
+                <span class="mios-radar-tooltip" aria-hidden="true">
+                  <strong>ABOUT</strong>
+                  <span>Read the studio file.</span>
+                  <em>CLICK TO TRAVEL →</em>
+                </span>
+              </button>
+              <button class="mios-radar-node" type="button" data-target="contact" data-angle="225" data-radius="34" aria-label="CONTACT — click to travel">
+                <span class="mios-radar-node__label" aria-hidden="true">CONTACT</span>
+                <span class="mios-radar-tooltip" aria-hidden="true">
+                  <strong>CONTACT</strong>
+                  <span>Jump to comms and contact links.</span>
+                  <em>CLICK TO TRAVEL →</em>
+                </span>
+              </button>
+            </div>
             <img
               class="mark"
               src="MiossoftLogo.png"
@@ -959,7 +2315,7 @@
             </p>
           </div>
           <div class="games">
-            <a
+            <div class="mios-game-entry"><a
               class="game game-unreleased"
               href="#"
               aria-label="After Dark: Stronghold is not released yet"
@@ -1017,9 +2373,8 @@
                   </div>
                   <span class="view" aria-live="polite">VIEW PROJECT ↗</span>
                 </div>
-              </div></a
-            >
-            <a
+              </div></a><div class="mios-card-actions"><button class="mios-game-action" type="button" data-briefing="stronghold">▣ MISSION BRIEFING</button></div></div>
+            <div class="mios-game-entry"><a
               class="game game-unreleased"
               href="#"
               aria-label="After Dark: Clicker is not released yet"
@@ -1061,9 +2416,9 @@
                   </div>
                   <span class="view" aria-live="polite">VIEW PROJECT ↗</span>
                 </div>
-              </div></a
-            >
+              </div></a><div class="mios-card-actions"><button class="mios-game-action" type="button" data-briefing="clicker">▣ MISSION BRIEFING</button></div></div>
           </div>
+          <div class="mios-collection-actions"><button class="mios-game-action" type="button" data-briefing="collection">▦ GAME COLLECTION</button></div>
         </div>
       </section>
       <section id="about">
@@ -1213,7 +2568,11 @@
         ALL RIGHTS RESERVED.
       </p>
       <a href="#top">BACK TO TOP ↑</a>
-    </footer>
+    <div class="mios-privacy-links" translate="no">
+  <button type="button" class="mios-privacy-link" data-mios-privacy="settings" data-en="Cookie preferences" data-tr="Çerez tercihleri">Cookie preferences</button>
+  <button type="button" class="mios-privacy-link" data-mios-privacy="policy" data-en="Privacy &amp; cookie policy" data-tr="Gizlilik ve çerez politikası">Privacy &amp; cookie policy</button>
+</div>
+</footer>
     <script> 
       const toggle = document.querySelector(".nav-toggle"),
         links = document.querySelector(".navlinks");
@@ -1251,5 +2610,1438 @@
         });
       });
     </script>
-  </body>
+  
+<!-- MIOS CURSOR START -->
+<div class="mios-cursor" id="miosCursor" aria-hidden="true">
+  <div class="mios-cursor__reticle"></div>
+</div>
+<script>
+
+  // Independent of the existing page scripts; shared by the home and 404 pages.
+  (() => {
+    const cursor = document.getElementById('miosCursor');
+    if (!cursor || !window.matchMedia || !window.PointerEvent) return;
+
+    const root = document.documentElement;
+    const finePointer = window.matchMedia('(hover:hover) and (pointer:fine)');
+    const nativeTargets = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), iframe, video[controls], audio[controls], [data-native-cursor], :disabled, [aria-disabled="true"]';
+    const clickTargets = 'a[href], button, [role="button"], [role="link"], summary, label[for]';
+    let x = 0;
+    let y = 0;
+    let inside = false;
+    let frame = 0;
+
+    function hide() {
+      root.classList.remove('mios-cursor-active');
+      cursor.classList.remove('is-visible', 'is-hovering', 'is-pressed', 'is-game-unreleased');
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+    }
+
+    function render() {
+      frame = 0;
+      if (!finePointer.matches || !inside || root.classList.contains('mios-native-cursor')) return;
+      const privacyModal = document.getElementById('miosPrivacyPolicy');
+      if (privacyModal && privacyModal.open) {
+        const rect = privacyModal.getBoundingClientRect();
+        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+          hide();
+          return;
+        }
+      }
+      const target = document.elementFromPoint(x, y);
+      if (!target || target.closest(nativeTargets)) {
+        hide();
+        return;
+      }
+      const clickable = target.closest(clickTargets);
+      // The game card's release state controls the reticle color.
+      const gameCard = target.closest('.game');
+      cursor.classList.toggle('is-game-unreleased', Boolean(gameCard && gameCard.classList.contains('game-unreleased')));
+      // Position first, then hide the system pointer: no invisible startup gap.
+      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      cursor.classList.add('is-visible');
+      cursor.classList.toggle('is-hovering', Boolean(clickable));
+      root.classList.add('mios-cursor-active');
+    }
+
+    function queueRender() {
+      if (!frame) frame = requestAnimationFrame(render);
+    }
+
+    document.addEventListener('pointermove', event => {
+      if (event.pointerType !== 'mouse' || !finePointer.matches || root.classList.contains('mios-native-cursor')) {
+        inside = false;
+        hide();
+        return;
+      }
+      x = event.clientX;
+      y = event.clientY;
+      inside = true;
+      queueRender();
+    }, {passive:true});
+
+    document.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'mouse' || !finePointer.matches || root.classList.contains('mios-native-cursor')) {
+        inside = false;
+        hide();
+        return;
+      }
+      if (event.button !== 0) return;
+      cursor.classList.add('is-pressed');
+    }, {passive:true});
+
+
+    // Impact color follows the clicked target state.
+    // Red = unreleased game cards and destructive buttons such as DISABLE ALL / RESET.
+    function isRedImpactTarget(target) {
+      if (!target) return false;
+      return Boolean(
+        target.closest('.game.game-unreleased') ||
+        target.closest('.mios-reset-button') ||
+        target.closest('#miosResetConfirm') ||
+        target.closest('#miosDisableAll')
+      );
+    }
+
+    document.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || event.pointerType !== 'mouse' || !finePointer.matches) return;
+      if (root.classList.contains('mios-native-cursor') || root.classList.contains('mios-reduce-motion')) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const privacyModal = document.getElementById('miosPrivacyPolicy');
+      if (privacyModal && privacyModal.open) {
+        const rect = privacyModal.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX >= rect.right || event.clientY < rect.top || event.clientY >= rect.bottom) return;
+      }
+      const burst = document.createElement('span');
+      burst.className = 'mios-impact';
+      if (isRedImpactTarget(event.target)) burst.classList.add('is-red');
+      burst.setAttribute('aria-hidden', 'true');
+      burst.style.left = `${event.clientX}px`;
+      burst.style.top = `${event.clientY}px`;
+      burst.innerHTML = '<span class="mios-impact__flash"></span><span class="mios-impact__ring"></span>' +
+        Array.from({length: 7}, (_, i) => `<span class="mios-impact__spark" style="--angle:${i * 360 / 7}deg"></span>`).join('');
+      // cursor is temporarily moved into <dialog> while that modal is shown.
+      const layer = cursor.parentElement?.matches('dialog[open]') ? cursor.parentElement : document.body;
+      layer.appendChild(burst);
+      window.setTimeout(() => burst.remove(), 450);
+    }, {passive: true});
+
+    window.addEventListener('pointerup', () => {
+      cursor.classList.remove('is-pressed');
+      if (inside) queueRender();
+    }, {passive:true});
+
+    function deactivate() {
+      inside = false;
+      hide();
+    }
+    root.addEventListener('pointerleave', deactivate);
+    document.addEventListener('pointercancel', deactivate);
+    window.addEventListener('blur', deactivate);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) deactivate();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Tab' || event.key === 'Escape') deactivate();
+    });
+    // The element beneath a stationary pointer can change when scrolling.
+    document.addEventListener('scroll', () => {
+      if (inside) queueRender();
+    }, {passive:true, capture:true});
+    window.addEventListener('resize', () => {
+      if (inside) queueRender();
+    }, {passive:true});
+    finePointer.addEventListener('change', deactivate);
+  })();
+
+</script>
+<!-- MIOS CURSOR END -->
+
+<!-- MIOS SCROLL PROGRESS START -->
+<div class="mios-scroll-progress" id="miosScrollProgress" aria-hidden="true" hidden>
+  <span class="mios-scroll-progress__health"></span>
+  <span class="mios-scroll-progress__meter">
+    <span class="mios-scroll-progress__fill" id="miosScrollProgressFill"></span>
+  </span>
+</div>
+<script>
+  (() => {
+    const track = document.getElementById('miosScrollProgress');
+    const fill = document.getElementById('miosScrollProgressFill');
+    if (!track || !fill) return;
+    const header = document.querySelector('header');
+    let frame = 0;
+
+    // Low health stays red, the midpoint is yellow, and the last fifth is green.
+    function healthColor(progress) {
+      const red = [255, 77, 77];
+      const yellow = [244, 197, 66];
+      const green = [16, 219, 5];
+      const firstHalf = progress <= 0.5;
+      const from = firstHalf ? red : yellow;
+      const to = firstHalf ? yellow : green;
+      const blend = firstHalf
+        ? (progress - 0.25) / 0.25
+        : (progress - 0.5) / 0.3;
+      const amount = Math.min(1, Math.max(0, blend));
+      return from.map((value, i) => Math.round(value + (to[i] - value) * amount)).join(', ');
+    }
+
+    function updateProgress() {
+      frame = 0;
+      const page = document.scrollingElement || document.documentElement;
+      const distance = Math.max(0, page.scrollHeight - page.clientHeight);
+      const progress = distance > 0
+        ? Math.min(1, Math.max(0, page.scrollTop / distance))
+        : 0;
+      track.hidden = distance === 0;
+      if (header) {
+        track.style.top = `${Math.max(0, header.getBoundingClientRect().bottom) + 12}px`;
+      }
+      if (document.documentElement.dataset.miosTheme === 'neon') {
+        track.style.setProperty('--mios-health-rgb', healthColor(progress));
+      } else {
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--mios-accent-rgb').trim();
+        track.style.setProperty('--mios-health-rgb', accent || '240, 240, 240');
+      }
+      fill.style.transform = `scaleX(${progress})`;
+    }
+
+    function queueProgress() {
+      if (!frame) frame = requestAnimationFrame(updateProgress);
+    }
+
+    window.addEventListener('scroll', queueProgress, {passive:true});
+    window.addEventListener('mios:themechange', queueProgress);
+    window.addEventListener('resize', queueProgress, {passive:true});
+    window.addEventListener('load', queueProgress);
+    window.addEventListener('pageshow', queueProgress);
+    // Keep the fill accurate after images load or the layout changes.
+    if (window.ResizeObserver) {
+      const observer = new ResizeObserver(queueProgress);
+      observer.observe(document.documentElement);
+      observer.observe(document.body);
+      if (header) observer.observe(header);
+    }
+    updateProgress();
+  })();
+</script>
+<!-- MIOS SCROLL PROGRESS END -->
+
+<!-- MIOS STUDIO EFFECTS START -->
+<div class="mios-secret-toast" id="miosSecretToast" role="status" aria-live="polite" aria-atomic="true" hidden>
+  <span class="mios-secret-toast__badge" aria-hidden="true">✦</span>
+  <div>
+    <span class="mios-secret-toast__eyebrow">ACHIEVEMENT UNLOCKED</span>
+    <strong id="miosAchievementToastTitle">SECRET FOUND</strong>
+    <span class="mios-secret-toast__detail" id="miosAchievementToastDetail">You found the hidden signal.</span>
+  </div>
+</div>
+<script>
+  // Follow the visible section without changing anchor navigation.
+  (() => {
+    const header = document.querySelector('header');
+    const items = Array.from(document.querySelectorAll('header .navlinks a[href^="#"]'))
+      .map(link => ({link, section: document.getElementById(link.getAttribute('href').slice(1))}))
+      .filter(item => item.section);
+    if (!items.length) return;
+    let frame = 0;
+    let active = null;
+
+    function updateCurrentSection() {
+      frame = 0;
+      const page = document.scrollingElement || document.documentElement;
+      const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+      const marker = headerBottom + Math.min(160, window.innerHeight * 0.22);
+      let current = items[0];
+      items.forEach(item => {
+        if (item.section.getBoundingClientRect().top <= marker) current = item;
+      });
+      if (page.scrollHeight > page.clientHeight &&
+          page.scrollTop + page.clientHeight >= page.scrollHeight - 2) {
+        current = items[items.length - 1];
+      }
+      if (active === current) return;
+      active = current;
+      items.forEach(item => {
+        const selected = item === current;
+        item.link.classList.toggle('is-current', selected);
+        if (selected) item.link.setAttribute('aria-current', 'location');
+        else item.link.removeAttribute('aria-current');
+      });
+      window.dispatchEvent(new CustomEvent('mios:sectionchange', {detail:{id:current.section.id}}));
+    }
+
+    function queueCurrentSection() {
+      if (!frame) frame = requestAnimationFrame(updateCurrentSection);
+    }
+    window.addEventListener('scroll', queueCurrentSection, {passive:true});
+    window.addEventListener('resize', queueCurrentSection, {passive:true});
+    window.addEventListener('hashchange', queueCurrentSection);
+    window.addEventListener('load', queueCurrentSection);
+    window.addEventListener('pageshow', queueCurrentSection);
+    if (window.ResizeObserver) {
+      const observer = new ResizeObserver(queueCurrentSection);
+      observer.observe(document.documentElement);
+      observer.observe(document.body);
+    }
+    updateCurrentSection();
+  })();
+</script>
+<script>
+  // Visible content stays visible; later sections reveal once on entry.
+  (() => {
+    if (!window.IntersectionObserver ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        observer.unobserve(entry.target);
+      });
+    }, {threshold:0.08, rootMargin:'0px 0px -24px 0px'});
+
+    document.querySelectorAll('main > section > .inner').forEach(element => {
+      const bounds = element.getBoundingClientRect();
+      if (bounds.top < window.innerHeight && bounds.bottom > 0) return;
+      element.classList.add('mios-reveal');
+      observer.observe(element);
+    });
+  })();
+</script>
+<script>
+  // Five consecutive logo clicks reveal a small secret; normal links still work.
+  (() => {
+    const logo = document.querySelector('header a.logo');
+    if (!logo) return;
+    let clicks = 0;
+    let lastClick = 0;
+    let cooldownUntil = 0;
+
+    logo.addEventListener('click', event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const now = Date.now();
+      if (now < cooldownUntil) return;
+      clicks = now - lastClick > 1600 ? 1 : clicks + 1;
+      lastClick = now;
+      if (clicks < 5) return;
+      clicks = 0;
+      cooldownUntil = now + 10000;
+      window.dispatchEvent(new Event('mios:secretfound'));
+    });
+  })();
+</script>
+<!-- MIOS STUDIO EFFECTS END -->
+
+<!-- MIOS OPTIONS START -->
+<button class="mios-options-toggle" id="miosOptionsToggle" type="button" aria-expanded="false" aria-controls="miosOptionsPanel" hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <path d="M3 6h18M3 12h18M3 18h18"></path>
+    <path d="M8 3v6M16 9v6M10 15v6"></path>
+  </svg>
+  OPTIONS
+</button>
+<div class="mios-options-panel" id="miosOptionsPanel" role="region" aria-labelledby="miosOptionsTitle" hidden>
+  <div class="mios-options-heading">
+    <strong id="miosOptionsTitle">OPTIONS</strong>
+    <button class="mios-options-close" id="miosOptionsClose" type="button" aria-label="Close options">×</button>
+  </div>
+  <div class="mios-option-row">
+<div><span class="mios-option-label" id="miosExtrasLabel">GAME SYSTEMS</span><span class="mios-option-note">XP, briefings, waypoints and small game effects.</span></div>
+<button class="mios-option-switch" id="miosExtrasSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosExtrasLabel"><span aria-hidden="true">ON</span></button>
+</div>
+<div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosCursorLabel">CUSTOM CURSOR</span><span class="mios-option-note">Use the neon crosshair.</span></div>
+    <button class="mios-option-switch" id="miosCursorSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosCursorLabel"><span aria-hidden="true">ON</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosMotionLabel">REDUCED MOTION</span><span class="mios-option-note" id="miosMotionNote">Keep movement to a minimum.</span></div>
+    <button class="mios-option-switch" id="miosMotionSwitch" type="button" role="switch" aria-checked="false" aria-labelledby="miosMotionLabel" aria-describedby="miosMotionNote"><span aria-hidden="true">OFF</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosSoundLabel">UI SOUND</span><span class="mios-option-note" id="miosSoundNote">Soft hover and click sounds.</span></div>
+    <button class="mios-option-switch" id="miosSoundSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosSoundLabel" aria-describedby="miosSoundNote"><span aria-hidden="true">ON</span></button>
+  </div>
+
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosMinimapLabel">MINIMAP</span><span class="mios-option-note">Show section navigation.</span></div>
+    <button class="mios-option-switch" id="miosMinimapSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosMinimapLabel"><span aria-hidden="true">ON</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosHealthLabel">HEALTH BAR</span><span class="mios-option-note">Show the scroll progress health meter.</span></div>
+    <button class="mios-option-switch" id="miosHealthSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosHealthLabel"><span aria-hidden="true">ON</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosQuestsLabel">QUEST LOG</span><span class="mios-option-note">Show exploration objectives.</span></div>
+    <button class="mios-option-switch" id="miosQuestsSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosQuestsLabel"><span aria-hidden="true">ON</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosAchievementsLabel">ACHIEVEMENTS</span><span class="mios-option-note">Show badges and unlock notices.</span></div>
+    <button class="mios-option-switch" id="miosAchievementsSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosAchievementsLabel"><span aria-hidden="true">ON</span></button>
+  </div>
+  <div class="mios-options-bulk" role="group" aria-label="Bulk visual settings">
+    <button id="miosEnableAll" type="button">ENABLE ALL</button>
+    <button id="miosDisableAll" type="button">DISABLE ALL</button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosResetLabel">RESET PROGRESS</span><span class="mios-option-note">Replay all quests and achievements.</span></div>
+    <button class="mios-reset-button" id="miosResetButton" type="button" aria-labelledby="miosResetLabel">RESET</button>
+  </div>
+</div>
+
+<script>
+// The navbar slider changes appearance only. Fresh page loads always begin in NEON.
+(() => {
+  const root = document.documentElement;
+  const slider = document.getElementById('miosNavThemeSlider');
+  const current = document.getElementById('miosNavThemeCurrent');
+  const themes = ['neon', 'mono', 'classic-dark', 'classic-light'];
+  const labels = ['NEON', 'MONO', 'DARK', 'LIGHT'];
+  if (!slider || !current) return;
+  function apply(index) {
+    const choice = Math.max(0, Math.min(3, Number(index) || 0));
+    root.dataset.miosTheme = themes[choice];
+    slider.value = String(choice);
+    slider.style.setProperty('--mios-theme-progress', `${choice * 100 / 3}%`);
+    current.textContent = labels[choice];
+    slider.setAttribute('aria-valuetext', ['Neon Green', 'Monochrome', 'Classic Dark', 'Classic Light'][choice]);
+    // The health meter keeps its game-like red/yellow/green bands in Neon only.
+    // Other themes use the active palette for the filled portion.
+    window.dispatchEvent(new Event('mios:themechange'));
+  }
+  slider.addEventListener('input', () => apply(slider.value));
+  apply(0);
+})();
+</script>
+<div class="mios-reset-overlay" id="miosResetOverlay" hidden>
+  <div class="mios-reset-dialog" role="alertdialog" aria-modal="true" aria-labelledby="miosResetTitle" aria-describedby="miosResetDescription">
+    <span class="mios-reset-eyebrow">SAVE DATA / WARNING</span>
+    <strong id="miosResetTitle">RESET PROGRESS?</strong>
+    <p id="miosResetDescription">All quest and achievement progress will be erased on this browser. Your UI settings will remain unchanged.</p>
+    <div class="mios-reset-actions">
+      <button type="button" id="miosResetCancel">CANCEL</button>
+      <button type="button" id="miosResetConfirm">RESET PROGRESS</button>
+    </div>
+  </div>
+</div>
+<script>
+  (() => {
+    const resetButton = document.getElementById('miosResetButton');
+    const overlay = document.getElementById('miosResetOverlay');
+    const cancel = document.getElementById('miosResetCancel');
+    const confirm = document.getElementById('miosResetConfirm');
+    if (!resetButton || !overlay || !cancel || !confirm) return;
+    function closeReset() { overlay.hidden = true; resetButton.focus(); }
+    resetButton.addEventListener('click', () => { overlay.hidden = false; cancel.focus(); });
+    cancel.addEventListener('click', closeReset);
+    overlay.addEventListener('pointerdown', e => { if (e.target === overlay) closeReset(); });
+    overlay.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeReset(); }
+      if (e.key === 'Tab') {
+        const first = cancel, last = confirm;
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+    confirm.addEventListener('click', () => {
+      window.dispatchEvent(new Event('mios:resetprogress'));
+      closeReset();
+    });
+  })();
+</script>
+<script>
+  (() => {
+    const root = document.documentElement;
+    const launcher = document.getElementById('miosOptionsToggle');
+    const panel = document.getElementById('miosOptionsPanel');
+    const close = document.getElementById('miosOptionsClose');
+    const cursorSwitch = document.getElementById('miosCursorSwitch');
+    const motionSwitch = document.getElementById('miosMotionSwitch');
+    const soundSwitch = document.getElementById('miosSoundSwitch');
+    const motionNote = document.getElementById('miosMotionNote');
+    const soundNote = document.getElementById('miosSoundNote');
+    const featureSwitches = {minimap:document.getElementById('miosMinimapSwitch'), quests:document.getElementById('miosQuestsSwitch'), achievements:document.getElementById('miosAchievementsSwitch'), health:document.getElementById('miosHealthSwitch')};
+    const enableAll = document.getElementById('miosEnableAll');
+    const disableAll = document.getElementById('miosDisableAll');
+    const extrasSwitch = document.getElementById('miosExtrasSwitch');
+    if (!launcher || !panel || !close || !cursorSwitch || !motionSwitch || !soundSwitch) return;
+    const systemMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const preferenceKey = 'miossoft.ui.preferences.v1';
+    let saved = null;
+    try { saved = JSON.parse(window.localStorage.getItem(preferenceKey)); } catch (_) {}
+    const settings = {
+      cursor: !saved || saved.cursor !== false,
+      reducedMotion: Boolean(saved && saved.reducedMotion === true),
+      sound: !saved || saved.sound !== false,
+      minimap: !saved || saved.minimap !== false,
+      quests: !saved || saved.quests !== false,
+      achievements: !saved || saved.achievements !== false,
+      health: !saved || saved.health !== false
+    };
+    const AudioEngine = window.AudioContext || window.webkitAudioContext;
+    let audio = null;
+    let lastHover = -Infinity;
+    let open = false;
+
+    function reducedMotion() { return settings.reducedMotion || systemMotion.matches; }
+    function setSwitch(button, enabled) {
+      button.setAttribute('aria-checked', String(enabled));
+      button.querySelector('span').textContent = enabled ? 'ON' : 'OFF';
+    }
+    function applySettings() {
+      root.classList.toggle('mios-native-cursor', !settings.cursor);
+      root.classList.toggle('mios-reduce-motion', reducedMotion());
+      if (!settings.cursor) {
+        root.classList.remove('mios-cursor-active');
+        const cursor = document.getElementById('miosCursor');
+        if (cursor) cursor.classList.remove('is-visible', 'is-hovering', 'is-pressed', 'is-game-unreleased');
+      }
+      setSwitch(cursorSwitch, settings.cursor);
+      setSwitch(motionSwitch, reducedMotion());
+      motionSwitch.disabled = systemMotion.matches;
+      motionNote.textContent = systemMotion.matches ? 'Enabled by your device.' : 'Keep movement to a minimum.';
+      if (!AudioEngine) settings.sound = false;
+      setSwitch(soundSwitch, settings.sound);
+      if (AudioEngine) soundNote.textContent = settings.sound && (!audio || audio.state !== 'running')
+        ? 'Click once to activate hover and click sounds.'
+        : 'Hover and click sounds.';
+      soundSwitch.disabled = !AudioEngine;
+      if (!AudioEngine) soundNote.textContent = 'Sound is unavailable in this browser.';
+      Object.keys(featureSwitches).forEach(name => {
+        root.classList.toggle(`mios-hide-${name}`, !settings[name]);
+        if (featureSwitches[name]) setSwitch(featureSwitches[name], settings[name]);
+      });
+      window.dispatchEvent(new Event('mios:preferenceschange'));
+    }
+    function saveSettings() {
+      try { window.localStorage.setItem(preferenceKey, JSON.stringify({cursor:settings.cursor, reducedMotion:settings.reducedMotion, sound:settings.sound, minimap:settings.minimap, quests:settings.quests, achievements:settings.achievements, health:settings.health})); } catch (_) {}
+    }
+    function setOpen(next, restoreFocus) {
+      open = next;
+      panel.hidden = !open;
+      launcher.setAttribute('aria-expanded', String(open));
+      if (open) cursorSwitch.focus();
+      else if (restoreFocus) launcher.focus();
+    }
+    launcher.addEventListener('click', () => setOpen(!open, false));
+    close.addEventListener('click', () => setOpen(false, true));
+    document.addEventListener('pointerdown', event => {
+      if (open && !panel.contains(event.target) && !launcher.contains(event.target)) setOpen(false, false);
+    });
+    document.addEventListener('focusin', event => {
+      if (open && !panel.contains(event.target) && !launcher.contains(event.target)) setOpen(false, false);
+    });
+    document.addEventListener('keydown', event => {
+      if (open && event.key === 'Escape') setOpen(false, true);
+    });
+    cursorSwitch.addEventListener('click', () => {
+      settings.cursor = !settings.cursor;
+      applySettings();
+      saveSettings();
+    });
+    motionSwitch.addEventListener('click', () => {
+      if (systemMotion.matches) return;
+      settings.reducedMotion = !settings.reducedMotion;
+      applySettings();
+      saveSettings();
+    });
+    Object.keys(featureSwitches).forEach(name => {
+      const button = featureSwitches[name];
+      if (button) button.addEventListener('click', () => {
+        settings[name] = !settings[name];
+        applySettings();
+        saveSettings();
+      });
+    });
+    // Bulk actions modify settings only; quest/achievement progress is untouched.
+    function setAllVisualOptions(on) {
+      const oldSound = settings.sound;
+      settings.cursor = on;
+      settings.reducedMotion = !on;
+      settings.sound = on;
+      settings.minimap = on;
+      settings.quests = on;
+      settings.achievements = on;
+      settings.health = on;
+      applySettings();
+      saveSettings();
+      // GAME SYSTEMS keeps its own persisted setting; use its existing handler.
+      if (extrasSwitch && (extrasSwitch.getAttribute('aria-checked') === 'true') !== on) {
+        extrasSwitch.click();
+      }
+      // Shut down active sound when all effects are disabled.
+      if (!on && oldSound && audio && audio.state === 'running') audio.suspend().catch(() => {});
+      // No autoplay or sound unlock on ENABLE ALL; a normal user gesture handles it.
+    }
+    if (enableAll) enableAll.addEventListener('click', () => setAllVisualOptions(true));
+    if (disableAll) disableAll.addEventListener('click', () => setAllVisualOptions(false));
+    systemMotion.addEventListener('change', applySettings);
+
+    // Audio is enabled by default, but unlocks only through a real interaction.
+    let audioActivated = false;
+    let resumeTask = null;
+    let resumeContext = null;
+    function getAudio(allowCreate) {
+      if (!AudioEngine) return null;
+      try {
+        if (audio && audio.state === 'closed') audio = null;
+        if (!audio && allowCreate) audio = new AudioEngine();
+        return audio;
+      } catch (_) { return null; }
+    }
+    function resumeAudio(context, userGesture) {
+      if (context.state === 'running') return Promise.resolve(context);
+      if (resumeTask && resumeContext === context && !userGesture) return resumeTask;
+      try {
+        const pending = Promise.resolve(context.resume())
+          .then(() => {
+            if (context.state !== 'running') return null;
+            if (settings.sound) soundNote.textContent = 'Hover and click sounds.';
+            return context;
+          })
+          .catch(() => null);
+        resumeTask = pending;
+        resumeContext = context;
+        pending.then(() => {
+          if (resumeTask === pending) { resumeTask = null; resumeContext = null; }
+        });
+        return pending;
+      } catch (_) { return Promise.resolve(null); }
+    }
+    function unlockAudio() {
+      if (!settings.sound || document.hidden) return;
+      audioActivated = true;
+      const context = getAudio(true);
+      if (!context) return;
+      if (context.state === 'running') soundNote.textContent = 'Hover and click sounds.';
+      else resumeAudio(context, true);
+    }
+    function tone(context, type) {
+      if (!settings.sound || document.hidden || context.state !== 'running') return;
+      const sounds = {
+        hover: [1050, 1350, 0.055, 0.035, 'sine'],
+        click: [640, 320, 0.09, 0.05, 'triangle'],
+        enable: [720, 960, 0.12, 0.04, 'sine'],
+        radar: [280, 720, 0.19, 0.025, 'sine']
+      };
+      const [from, to, duration, volume, waveform] = sounds[type];
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime;
+      oscillator.type = waveform;
+      oscillator.frequency.setValueAtTime(from, now);
+      oscillator.frequency.exponentialRampToValueAtTime(to, now + duration);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(volume, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.01);
+    }
+    function playSound(type, userGesture) {
+      if (!settings.sound || document.hidden) return;
+      if (userGesture) audioActivated = true;
+      const context = getAudio(audioActivated);
+      if (!context) return;
+      if (context.state === 'running') {
+        tone(context, type);
+      } else if (audioActivated) {
+        const ready = resumeAudio(context, userGesture);
+        // Do not queue delayed hover sounds while the browser is unlocking audio.
+        if (type !== 'hover') ready.then(running => { if (running) tone(running, type); });
+      }
+    }
+    soundSwitch.addEventListener('click', () => {
+      if (!AudioEngine) return;
+      settings.sound = !settings.sound;
+      applySettings();
+      saveSettings();
+      if (settings.sound) {
+        if (!getAudio(true)) {
+          settings.sound = false;
+          applySettings();
+          saveSettings();
+          soundNote.textContent = 'Sound could not be started.';
+          return;
+        }
+        playSound('enable', true);
+      } else if (audio && audio.state === 'running') audio.suspend().catch(() => {});
+    });
+    function interactiveTarget(event) {
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return null;
+      const control = target.closest('a[href], button, [role="button"], [role="link"]');
+      if (!control || control.matches(':disabled, [aria-disabled="true"]')) return null;
+      return control;
+    }
+    // Mouse events cover actual mouse hover without relying on pointerType values.
+    document.addEventListener('mouseover', event => {
+      if (!settings.sound || (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents)) return;
+      const control = interactiveTarget(event);
+      if (!control || (event.relatedTarget && control.contains(event.relatedTarget))) return;
+      const now = Date.now();
+      if (now - lastHover < 90) return;
+      lastHover = now;
+      playSound('hover', false);
+    }, {passive:true, capture:true});
+    document.addEventListener('pointerdown', event => {
+      if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) unlockAudio();
+    }, {passive:true, capture:true});
+    document.addEventListener('keydown', event => {
+      if (!event.repeat && !['Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Tab'].includes(event.key)) unlockAudio();
+    }, {capture:true});
+    document.addEventListener('click', event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const control = interactiveTarget(event);
+      if (!control || control === soundSwitch || control.matches('.signal')) {
+        unlockAudio();
+        return;
+      }
+      playSound('click', true);
+    }, {capture:true});
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && audio && audio.state === 'running') audio.suspend().catch(() => {});
+    });
+
+    const radar = document.querySelector('.signal[role="button"]');
+    if (radar) {
+      const wave = document.createElement('span');
+      wave.className = 'mios-radar-wave';
+      wave.setAttribute('aria-hidden', 'true');
+      const delayed = wave.cloneNode();
+      delayed.classList.add('mios-radar-wave--delayed');
+      radar.append(wave, delayed);
+      let lastScan = -Infinity;
+      let resetTimer;
+      function scan() {
+        const now = Date.now();
+        if (now - lastScan < 650) return;
+        lastScan = now;
+        window.clearTimeout(resetTimer);
+        radar.classList.remove('is-scanning', 'is-scan-static');
+        if (reducedMotion()) {
+          radar.classList.add('is-scan-static');
+        } else {
+          void radar.offsetWidth;
+          radar.classList.add('is-scanning');
+        }
+        resetTimer = window.setTimeout(() => radar.classList.remove('is-scanning', 'is-scan-static'), reducedMotion() ? 300 : 1000);
+        window.dispatchEvent(new Event('mios:radarscan'));
+        playSound('radar', true);
+      }
+      radar.addEventListener('click', event => {
+        if (!event.target.closest('.mios-radar-node')) scan();
+      });
+      radar.addEventListener('keydown', event => {
+        if (event.target.closest('.mios-radar-node')) return;
+        if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
+          event.preventDefault();
+          scan();
+        }
+      });
+
+      const radarNav = document.getElementById('miosRadarNav');
+      const nodes = radarNav ? Array.from(radarNav.querySelectorAll('.mios-radar-node')) : [];
+
+      // Show a copy in <body> so .signal { contain: paint } cannot crop the tooltip.
+      // The original remains inside its button for accessible markup and content.
+      let activeTooltipNode = null;
+      const tooltipPortal = document.createElement('span');
+      tooltipPortal.className = 'mios-radar-tooltip mios-tooltip-portal';
+      tooltipPortal.setAttribute('aria-hidden', 'true');
+      tooltipPortal.hidden = true;
+      document.body.appendChild(tooltipPortal);
+
+      function positionTooltipPortal() {
+        if (!activeTooltipNode || tooltipPortal.hidden) return;
+        const rect = activeTooltipNode.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth;
+        const vh = window.innerHeight;
+        const tooltipWidth = tooltipPortal.getBoundingClientRect().width || 178;
+        const tooltipHeight = tooltipPortal.getBoundingClientRect().height || 95;
+        const left = Math.max(12 + tooltipWidth / 2, Math.min(vw - 12 - tooltipWidth / 2, rect.left + rect.width / 2));
+        const above = rect.top - tooltipHeight - 15;
+        const top = above >= 12 ? above : Math.min(vh - tooltipHeight - 12, rect.bottom + 15);
+        tooltipPortal.style.left = `${left}px`;
+        tooltipPortal.style.top = `${Math.max(12, top)}px`;
+      }
+      function showTooltipPortal(node) {
+        const source = node.querySelector('.mios-radar-tooltip');
+        if (!source) return;
+        activeTooltipNode = node;
+        tooltipPortal.innerHTML = source.innerHTML;
+        tooltipPortal.hidden = false;
+        positionTooltipPortal();
+      }
+      function hideTooltipPortal(node) {
+        if (activeTooltipNode !== node) return;
+        activeTooltipNode = null;
+        tooltipPortal.hidden = true;
+      }
+      nodes.forEach(node => {
+        node.addEventListener('pointerenter', () => showTooltipPortal(node));
+        node.addEventListener('pointerleave', () => hideTooltipPortal(node));
+        node.addEventListener('focus', () => showTooltipPortal(node));
+        node.addEventListener('blur', () => hideTooltipPortal(node));
+      });
+      window.addEventListener('scroll', positionTooltipPortal, {passive: true});
+      window.addEventListener('resize', positionTooltipPortal, {passive: true});
+
+      let orbitFrame = 0;
+      let orbitStarted = 0;
+
+      function positionNodes(now = 0) {
+        const moving = !reducedMotion();
+        const elapsed = moving ? ((now || 0) - orbitStarted) : 0;
+        nodes.forEach((node, index) => {
+          const base = parseFloat(node.dataset.angle || '0');
+          const radius = parseFloat(node.dataset.radius || '32');
+          const drift = moving ? (elapsed * (0.007 + index * 0.0016)) : 0;
+          const wobble = moving ? Math.sin(elapsed * 0.0014 + index) * 1.7 : 0;
+          const angle = (base + drift + wobble) * Math.PI / 180;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          node.style.left = `${50 + x}%`;
+          node.style.top = `${50 + y}%`;
+        });
+        positionTooltipPortal();
+        if (moving) orbitFrame = requestAnimationFrame(positionNodes);
+        else orbitFrame = 0;
+      }
+      function stopOrbit() {
+        if (orbitFrame) cancelAnimationFrame(orbitFrame);
+        orbitFrame = 0;
+      }
+      function startOrbit() {
+        stopOrbit();
+        orbitStarted = performance.now();
+        positionNodes(orbitStarted);
+      }
+      nodes.forEach(node => {
+        node.addEventListener('click', event => {
+          event.stopPropagation();
+          const id = node.dataset.target;
+          const target = id ? document.getElementById(id) : null;
+          if (!target) return;
+          target.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start'});
+        });
+      });
+      window.addEventListener('mios:preferenceschange', startOrbit);
+      window.addEventListener('mios:sectionchange', event => {
+        const id = event.detail && event.detail.id;
+        nodes.forEach(node => node.classList.toggle('is-current', node.dataset.target === id));
+      });
+      startOrbit();
+    }
+    applySettings();
+    launcher.hidden = false;
+  })();
+</script>
+<!-- MIOS OPTIONS END -->
+
+<!-- MIOS EXPLORATION HUD START -->
+<nav class="mios-minimap" id="miosMinimap" aria-label="Section minimap" hidden>
+  <span class="mios-minimap__title" aria-hidden="true">MAP</span>
+  <a class="mios-map-link" href="#top" aria-label="Home" data-map-label="HOME">01</a>
+  <a class="mios-map-link" href="#games" aria-label="Games" data-map-label="GAMES">02</a>
+  <a class="mios-map-link" href="#about" aria-label="About" data-map-label="ABOUT">03</a>
+  <a class="mios-map-link" href="#contact" aria-label="Contact" data-map-label="CONTACT">04</a>
+</nav>
+<div class="mios-journal-dock" id="miosJournalDock" hidden>
+  <button class="mios-journal-button" id="miosQuestsButton" type="button" aria-controls="miosQuestPanel" aria-expanded="false" aria-label="Quests, 0 of 4 completed" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 6 2 2 4-4M12 6h9M3 13h5M12 13h9M3 19h5M12 19h9"></path></svg>
+    <span class="mios-journal-button__label">QUESTS</span><span class="mios-journal-count" id="miosQuestCount">0/4</span>
+  </button>
+  <button class="mios-journal-button" id="miosAchievementsButton" type="button" aria-controls="miosAchievementPanel" aria-expanded="false" aria-label="Achievements, 0 of 4 unlocked" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 3h10v6a5 5 0 0 1-10 0V3ZM7 5H3v3a4 4 0 0 0 4 4M17 5h4v3a4 4 0 0 1-4 4M12 14v6M7 21h10"></path></svg>
+    <span class="mios-journal-button__label">ACHIEVEMENTS</span><span class="mios-journal-count" id="miosAchievementCount">0/4</span>
+  </button>
+</div>
+<div class="mios-journal-panel" id="miosQuestPanel" role="region" aria-labelledby="miosQuestTitle" hidden>
+  <div class="mios-journal-heading"><strong id="miosQuestTitle" tabindex="-1">QUEST LOG</strong><button class="mios-options-close" type="button" data-close-journal aria-label="Close quest log">×</button></div>
+  <p class="mios-journal-caption">Explore the studio to complete your objectives.</p>
+  <ul class="mios-journal-list">
+    <li class="mios-log-row" data-quest="games"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Explore the games</strong><small>Visit the Games section.</small></div><span class="mios-log-state">PENDING</span></li>
+    <li class="mios-log-row" data-quest="about"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Meet the studio</strong><small>Visit the About section.</small></div><span class="mios-log-state">PENDING</span></li>
+    <li class="mios-log-row" data-quest="contact"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Find a contact channel</strong><small>Visit the Contact section.</small></div><span class="mios-log-state">PENDING</span></li>
+    <li class="mios-log-row" data-quest="cards"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Inspect both game cards</strong><small>Open the Stronghold and Clicker briefings.</small></div><span class="mios-log-state">PENDING</span></li>
+  </ul>
+</div>
+<div class="mios-journal-panel" id="miosAchievementPanel" role="region" aria-labelledby="miosAchievementTitle" hidden>
+  <div class="mios-journal-heading"><strong id="miosAchievementTitle" tabindex="-1">ACHIEVEMENTS</strong><button class="mios-options-close" type="button" data-close-journal aria-label="Close achievements">×</button></div>
+  <p class="mios-journal-caption">Small discoveries, saved in this browser.</p>
+  <ul class="mios-journal-list">
+    <li class="mios-log-row" data-achievement="radar"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Signal Acquired</strong><small>Run a radar scan.</small></div><span class="mios-log-state">LOCKED</span></li>
+    <li class="mios-log-row" data-achievement="explorer"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Full Recon</strong><small>Explore all four sections.</small></div><span class="mios-log-state">LOCKED</span></li>
+    <li class="mios-log-row" data-achievement="secret"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Hidden Signal</strong><small>Discover a secret in the studio.</small></div><span class="mios-log-state">LOCKED</span></li>
+    <li class="mios-log-row" data-achievement="cards"><span class="mios-log-marker" aria-hidden="true"></span><div class="mios-log-copy"><strong>Project Archivist</strong><small>Inspect both game projects.</small></div><span class="mios-log-state">LOCKED</span></li>
+  </ul>
+</div>
+<script>
+  (() => {
+    const root = document.documentElement;
+    const map = document.getElementById('miosMinimap');
+    const dock = document.getElementById('miosJournalDock');
+    const questButton = document.getElementById('miosQuestsButton');
+    const achievementButton = document.getElementById('miosAchievementsButton');
+    const questPanel = document.getElementById('miosQuestPanel');
+    const achievementPanel = document.getElementById('miosAchievementPanel');
+    if (!map || !dock || !questButton || !achievementButton || !questPanel || !achievementPanel) return;
+    const panels = {quests:questPanel, achievements:achievementPanel};
+    const buttons = {quests:questButton, achievements:achievementButton};
+    const mapLinks = Array.from(map.querySelectorAll('a[href^="#"]'));
+    const sections = ['top', 'games', 'about', 'contact'];
+    const questIds = ['games', 'about', 'contact', 'cards'];
+    const achievementIds = ['radar', 'explorer', 'secret', 'cards'];
+    const key = 'miossoft.studio.progress.v1';
+    let saved = null;
+    try { saved = JSON.parse(window.localStorage.getItem(key)); } catch (_) {}
+    const progress = {visited:{}, unlocked:{}};
+    sections.forEach(id => { progress.visited[id] = Boolean(saved && saved.visited && saved.visited[id] === true); });
+    achievementIds.forEach(id => { progress.unlocked[id] = Boolean(saved && saved.unlocked && saved.unlocked[id] === true); });
+    let openJournal = null;
+    let activeSection = null;
+    let visitTimer;
+    const toast = document.getElementById('miosSecretToast');
+    const toastTitle = document.getElementById('miosAchievementToastTitle');
+    const toastDetail = document.getElementById('miosAchievementToastDetail');
+    const notices = [];
+    let showingNotice = false;
+    let noticeTimer;
+    let noticeFinishTimer;
+    const achievementText = {
+      radar: ['SIGNAL ACQUIRED', 'Radar scan complete.'],
+      explorer: ['FULL RECON', 'You explored every section.'],
+      secret: ['SECRET FOUND', 'You found the hidden signal.'],
+      cards: ['PROJECT ARCHIVIST', 'Both project files inspected.']
+    };
+    function enabled(feature) { return !root.classList.contains(`mios-hide-${feature}`); }
+    function saveProgress() { try { window.localStorage.setItem(key, JSON.stringify(progress)); } catch (_) {} }
+    function stopNotices() {
+      notices.length = 0;
+      showingNotice = false;
+      window.clearTimeout(noticeTimer);
+      window.clearTimeout(noticeFinishTimer);
+      if (toast) { toast.classList.remove('is-visible'); toast.hidden = true; }
+    }
+    function showNextNotice() {
+      if (showingNotice || !notices.length || !enabled('achievements') || openJournal || !toast || !toastTitle || !toastDetail) return;
+      const id = notices.shift();
+      showingNotice = true;
+      toastTitle.textContent = achievementText[id][0];
+      toastDetail.textContent = achievementText[id][1];
+      toast.hidden = false;
+      requestAnimationFrame(() => {
+        if (showingNotice && enabled('achievements') && !openJournal) toast.classList.add('is-visible');
+      });
+      noticeTimer = window.setTimeout(() => {
+        toast.classList.remove('is-visible');
+        noticeFinishTimer = window.setTimeout(() => {
+          toast.hidden = true;
+          showingNotice = false;
+          showNextNotice();
+        }, 220);
+      }, 3200);
+    }
+    function renderProgress() {
+      const completedQuests = questIds.filter(id => progress.visited[id]).length;
+      const unlocked = achievementIds.filter(id => progress.unlocked[id]).length;
+      document.getElementById('miosQuestCount').textContent = `${completedQuests}/4`;
+      document.getElementById('miosAchievementCount').textContent = `${unlocked}/4`;
+      questButton.setAttribute('aria-label', `Quests, ${completedQuests} of 4 completed`);
+      achievementButton.setAttribute('aria-label', `Achievements, ${unlocked} of 4 unlocked`);
+      questPanel.querySelectorAll('[data-quest]').forEach(row => {
+        const complete = progress.visited[row.dataset.quest];
+        row.classList.toggle('is-complete', complete);
+        row.querySelector('.mios-log-marker').textContent = complete ? '✓' : '';
+        row.querySelector('.mios-log-state').textContent = complete ? 'DONE' : 'PENDING';
+      });
+      achievementPanel.querySelectorAll('[data-achievement]').forEach(row => {
+        const complete = progress.unlocked[row.dataset.achievement];
+        row.classList.toggle('is-complete', complete);
+        row.querySelector('.mios-log-marker').textContent = complete ? '✓' : '';
+        row.querySelector('.mios-log-state').textContent = complete ? 'UNLOCKED' : 'LOCKED';
+      });
+    }
+    function unlock(id, notify) {
+      if (progress.unlocked[id]) return;
+      progress.unlocked[id] = true;
+      saveProgress();
+      renderProgress();
+      if (notify && enabled('achievements') && !openJournal && !document.hidden) {
+        notices.push(id);
+        showNextNotice();
+      }
+    }
+    function setJournal(next, restoreFocus) {
+      const previous = openJournal;
+      openJournal = next;
+      Object.keys(panels).forEach(name => {
+        panels[name].hidden = name !== next;
+        buttons[name].setAttribute('aria-expanded', String(name === next));
+      });
+      if (next) {
+        stopNotices();
+        panels[next].querySelector('[tabindex="-1"]').focus();
+      } else if (restoreFocus && previous && !buttons[previous].hidden) buttons[previous].focus();
+    }
+    function renderVisibility() {
+      map.hidden = !enabled('minimap');
+      questButton.hidden = !enabled('quests');
+      achievementButton.hidden = !enabled('achievements');
+      dock.hidden = questButton.hidden && achievementButton.hidden;
+      if (openJournal && !enabled(openJournal)) setJournal(null, false);
+      if (!enabled('achievements')) stopNotices();
+    }
+    function scheduleVisit(id) {
+      if (!sections.includes(id)) return;
+      activeSection = id;
+      mapLinks.forEach(link => {
+        const selected = link.getAttribute('href') === `#${id}`;
+        link.classList.toggle('is-current', selected);
+        if (selected) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+      window.clearTimeout(visitTimer);
+      if (progress.visited[id] || document.hidden) return;
+      visitTimer = window.setTimeout(() => {
+        if (activeSection !== id || document.hidden) return;
+        progress.visited[id] = true;
+        saveProgress();
+        renderProgress();
+        if (sections.every(section => progress.visited[section])) unlock('explorer', true);
+      }, 600);
+    }
+    questButton.addEventListener('click', () => setJournal(openJournal === 'quests' ? null : 'quests', false));
+    achievementButton.addEventListener('click', () => setJournal(openJournal === 'achievements' ? null : 'achievements', false));
+    Object.values(panels).forEach(panel => {
+      panel.querySelector('[data-close-journal]').addEventListener('click', () => setJournal(null, true));
+    });
+    function outsideJournal(target) {
+      return openJournal && !panels[openJournal].contains(target) && !buttons[openJournal].contains(target);
+    }
+    document.addEventListener('pointerdown', event => { if (outsideJournal(event.target)) setJournal(null, false); });
+    document.addEventListener('focusin', event => { if (outsideJournal(event.target)) setJournal(null, false); });
+    document.addEventListener('keydown', event => { if (openJournal && event.key === 'Escape') setJournal(null, true); });
+    document.addEventListener('visibilitychange', () => {
+      window.clearTimeout(visitTimer);
+      if (document.hidden) stopNotices();
+      else if (activeSection) scheduleVisit(activeSection);
+    });
+    window.addEventListener('mios:resetprogress', () => {
+      window.clearTimeout(visitTimer);
+      activeSection = null; // A reset stays at 0/3 until the visitor navigates again.
+      stopNotices();
+      sections.forEach(id => { progress.visited[id] = false; });
+      progress.visited.cards = false;
+      progress.inspected = {};
+      achievementIds.forEach(id => { progress.unlocked[id] = false; });
+      saveProgress();
+      renderProgress();
+      setJournal(null, false);
+    });
+    window.addEventListener('mios:preferenceschange', renderVisibility);
+    window.addEventListener('mios:sectionchange', event => scheduleVisit(event.detail.id));
+    window.addEventListener('mios:radarscan', () => unlock('radar', true));
+    window.addEventListener('mios:secretfound', () => unlock('secret', true));
+    window.addEventListener('mios:cardinspected', event => {
+      const id = event.detail && event.detail.id;
+      if (id !== 'stronghold' && id !== 'clicker') return;
+      if (!progress.inspected) progress.inspected = {};
+      progress.inspected[id] = true;
+      if (progress.inspected.stronghold && progress.inspected.clicker) {
+        progress.visited.cards = true;
+        unlock('cards', true);
+      }
+      saveProgress();
+      renderProgress();
+    });
+    if (progress.inspected && progress.inspected.stronghold && progress.inspected.clicker) {
+      progress.visited.cards = true;
+      unlock('cards', false);
+    }
+    if (sections.every(id => progress.visited[id])) unlock('explorer', false);
+    renderProgress();
+    renderVisibility();
+    const current = document.querySelector('header .navlinks a[aria-current="location"]');
+    scheduleVisit(current ? current.getAttribute('href').slice(1) : 'top');
+  })();
+</script>
+<!-- MIOS EXPLORATION HUD END -->
+
+<!-- GAME INSPIRED SYSTEMS START -->
+<div class="mios-profile" id="miosProfile" aria-label="Explorer level" translate="yes">
+  <div class="mios-profile-head"><span id="miosPlayerLevel">Level 01 — Visitor</span><span id="miosPlayerXP">0%</span></div>
+  <div class="mios-xp-track"><div class="mios-xp-fill" id="miosXPFill"></div></div>
+  <div class="mios-xp-info">EXPLORATION PROGRESS</div>
+</div>
+<!-- Studio online indicator removed: avoid overlap with variable-height Level card. -->
+<div class="mios-toast" id="miosCheckpoint" role="status" aria-live="polite"></div>
+<div class="mios-interact-hint" id="miosInteractHint" aria-hidden="true">CLICK TO INTERACT</div>
+<div class="mios-transition" id="miosTransition" aria-hidden="true">LOADING SECTOR...</div>
+<dialog class="mios-briefing" id="miosBriefing" aria-labelledby="miosBriefTitle">
+<button class="mios-briefing-close" type="button" id="miosBriefClose" aria-label="Close">✕</button>
+<div class="mios-meta" id="miosBriefMeta">PROJECT DATA</div>
+<h3 id="miosBriefTitle">MISSION BRIEFING</h3>
+<div id="miosBriefBody"></div>
+</dialog>
+<!-- GAME INSPIRED SYSTEMS END -->
+<script>
+(() => {
+  const root = document.documentElement;
+  const sw = document.getElementById('miosExtrasSwitch');
+  const dialog = document.getElementById('miosBriefing');
+  const toast = document.getElementById('miosCheckpoint');
+  const hint = document.getElementById('miosInteractHint');
+  const transition = document.getElementById('miosTransition');
+  const key = 'miossoft.studio.progress.v1';
+  const settingsKey = 'miossoft.gameextras.v1';
+  let enabled = true;
+  let savedCheckpoints = new Set();
+  let toastTimer, transitionTimer, highlightTimer, progressTimer;
+  const titles = {top:'HOME',games:'GAMES',about:'ABOUT',contact:'CONTACT'};
+  const projects = {
+    stronghold: {
+      meta:'PROJECT FILE / IN DEVELOPMENT',
+      title:'AFTER DARK: STRONGHOLD',
+      body:'<p>A post-apocalyptic RPG focused on exploration, combat and survival in a ruined city.</p><p><strong>Platform:</strong> PC (planned console expansion).</p><p><strong>Status:</strong> In development — not yet released.</p>'
+    },
+    clicker: {
+      meta:'PROJECT FILE / COMING SOON',
+      title:'AFTER DARK: CLICKER',
+      body:'<p>An upcoming mobile clicker experience set in the After Dark universe.</p><p><strong>Platform:</strong> Mobile.</p><p><strong>Status:</strong> Coming soon — not yet released.</p>'
+    },
+    collection:{
+      meta:'STUDIO ARCHIVE / COLLECTION',
+      title:'GAME COLLECTION',
+      body:'<p>Our game archive currently features two After Dark universe projects:</p><ul><li><strong>After Dark: Stronghold</strong> — story-driven post-apocalyptic RPG, in development.</li><li><strong>After Dark: Clicker</strong> — mobile clicker, coming soon.</li></ul><p>Use Mission Briefing to inspect each project.</p>'
+    },
+    codex:{
+      meta:'STUDIO ARCHIVE / CODEX',
+      title:'MIOSSOFT CODEX',
+      body:'<p><strong>Miossoft Games</strong> is an independent game development studio focused on original gaming experiences.</p><p><strong>After Dark universe:</strong> an interconnected setting currently represented by Stronghold and Clicker.</p><p>Discover more in the Games and About sections.</p>'
+    }
+  };
+  const progress = () => {
+    try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (_) { return {}; }
+  };
+  // Avoid rewriting translatable UI labels every 400ms. Browser translation
+  // services need stable text nodes to retain their translated content.
+  let lastProfileSignature = null;
+  function renderXP(force = false) {
+    const p = progress();
+    const visited = p.visited || {};
+    const unlocked = p.unlocked || {};
+    const missions = ['games','about','contact'].filter(id=>visited[id]).length;
+    const badges = ['radar','explorer','secret'].filter(id=>unlocked[id]).length;
+    const inspected = p.inspected || {};
+    const cardCount = Number(!!inspected.stronghold) + Number(!!inspected.clicker);
+    const firstComplete = missions === 3;
+    const secondComplete = firstComplete && badges === 3;
+    const finalComplete = secondComplete && cardCount === 2;
+    const level = finalComplete ? 4 : secondComplete ? 3 : firstComplete ? 2 : 1;
+    const label = ['','Visitor','Explorer','Veteran','Legend'][level];
+    const fraction = finalComplete ? 100 : secondComplete ? Math.round(cardCount/2*100) : firstComplete ? Math.round(badges/3*100) : Math.round(missions/3*100);
+    const signature = `${level}:${fraction}:${finalComplete}`;
+    if (!force && signature === lastProfileSignature) return;
+    lastProfileSignature = signature;
+    document.getElementById('miosPlayerLevel').textContent = 'Level '+String(level).padStart(2,'0')+' — '+label;
+    document.getElementById('miosPlayerXP').textContent = finalComplete ? 'MAX' : fraction+'%';
+    document.getElementById('miosXPFill').style.width = fraction+'%';
+    document.querySelector('.mios-profile .mios-xp-info').textContent = finalComplete ? 'Maximum level / All objectives complete' : level===1 ? 'Quest progress' : level===2 ? 'Achievement progress' : 'Project inspection';
+  }
+  function showToast(message) {
+    if (!enabled) return;
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.add('show');
+    toastTimer=setTimeout(()=>toast.classList.remove('show'),2200);
+  }
+  function setEnabled(v) {
+    enabled=v;
+    root.classList.toggle('mios-hide-gameextras',!v);
+    sw.setAttribute('aria-checked',String(v));
+    sw.querySelector('span').textContent=v?'ON':'OFF';
+    try {localStorage.setItem(settingsKey,JSON.stringify(v));} catch(_){}
+    // The project/studio briefing is core content: keep it available regardless of HUD preference.
+  }
+  try { enabled=JSON.parse(localStorage.getItem(settingsKey))!==false; } catch(_){}
+  setEnabled(enabled);
+  sw.addEventListener('click',()=>setEnabled(!enabled));
+  function openBriefing(id) {
+    const data=projects[id];
+    if (!data) return;
+    document.getElementById('miosBriefMeta').textContent=data.meta;
+    document.getElementById('miosBriefTitle').textContent=data.title;
+    document.getElementById('miosBriefBody').innerHTML=data.body;
+    if (!dialog.open) {
+      dialog.showModal();
+      // Native <dialog> enters the top layer, above even the highest z-index cursor.
+      // Keep our existing crosshair in that same layer while the briefing is open.
+      const crosshair = document.getElementById('miosCursor');
+      if (crosshair) dialog.appendChild(crosshair);
+    }
+    if (id === 'stronghold' || id === 'clicker') {
+      window.dispatchEvent(new CustomEvent('mios:cardinspected', {detail:{id}}));
+      setTimeout(renderXP, 0);
+    }
+  }
+  document.querySelectorAll('[data-briefing]').forEach(button=>
+    button.addEventListener('click',()=>openBriefing(button.dataset.briefing)));
+  dialog.addEventListener('close', () => {
+    const crosshair = document.getElementById('miosCursor');
+    if (crosshair && crosshair.parentElement === dialog) document.body.appendChild(crosshair);
+  });
+  document.getElementById('miosBriefClose').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
+  const codex=document.createElement('button');
+  codex.type='button';
+  codex.className='mios-codex-open';
+  codex.textContent='▣ OPEN STUDIO CODEX';
+  codex.addEventListener('click',()=>openBriefing('codex'));
+  document.querySelector('#about .about-body .founder')?.insertAdjacentElement('afterend', codex);
+  // Waypoints are part of the existing quest log and link to the actual destinations.
+  document.querySelectorAll('#miosQuestPanel [data-quest]').forEach(row=>{
+    if (row.dataset.quest === 'cards') return;
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='mios-waypoint';
+    button.textContent='⌖ TRACK';
+    button.setAttribute('aria-label','Track '+row.dataset.quest+' section');
+    button.addEventListener('click',()=>{
+      if (!enabled) return;
+      const target=document.getElementById(row.dataset.quest);
+      if (!target) return;
+      document.querySelector('#miosQuestPanel [data-close-journal]')?.click();
+      clearTimeout(highlightTimer);
+      target.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      target.classList.add('mios-targeted');
+      highlightTimer=setTimeout(()=>target.classList.remove('mios-targeted'),2100);
+    });
+    row.append(button);
+  });
+  // A checkpoint is earned only when the real site exploration progress records a visit.
+  function readVisited() {
+    const v=progress().visited||{};
+    return ['games','about','contact'].filter(id=>v[id]);
+  }
+  function pollProgress() {
+    renderXP();
+    const actual=readVisited();
+    actual.forEach(id=>{
+      if (!savedCheckpoints.has(id)) {
+        savedCheckpoints.add(id);
+        showToast('✓ CHECKPOINT REACHED — '+titles[id]);
+      }
+    });
+  }
+  savedCheckpoints=new Set(readVisited());
+  renderXP();
+  progressTimer=setInterval(pollProgress,400);
+  window.addEventListener('mios:resetprogress',()=>{
+    savedCheckpoints.clear();
+    setTimeout(()=>{renderXP();showToast('PROGRESS RESET — NEW GAME');},50);
+  });
+  // Context-aware hover prompt, positioned away from mouse and without intercepting clicks.
+  document.addEventListener('pointerover',e=>{
+    const control=e.target.closest('a[href],button');
+    if (!control || !enabled || control.closest('#miosOptionsPanel,#miosBriefing')) return;
+    if (!control.matches('.mios-game-action,.mios-codex-open,.mios-waypoint,.mios-radar-node,header .navlinks a')) return;
+    hint.textContent=control.classList.contains('mios-waypoint')?'CLICK TO TRACK':'CLICK TO INTERACT';
+    hint.classList.add('show');
+  });
+  document.addEventListener('pointermove',e=>{
+    hint.style.left=Math.min(e.clientX+17,window.innerWidth-145)+'px';
+    hint.style.top=Math.min(e.clientY+19,window.innerHeight-35)+'px';
+  },{passive:true});
+  document.addEventListener('pointerout',e=>{
+    if(!e.relatedTarget || !e.relatedTarget.closest || !e.relatedTarget.closest('a[href],button'))
+      hint.classList.remove('show');
+  });
+  // Brief nonblocking visual transition. Never delay navigation or browser back/forward.
+  document.querySelectorAll('#miosRadarNav .mios-radar-node').forEach(node=>
+    node.addEventListener('click',()=>{
+      if(!enabled || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      clearTimeout(transitionTimer);
+      transition.classList.add('show');
+      transitionTimer=setTimeout(()=>transition.classList.remove('show'),280);
+    }));
+})();
+</script>
+
+
+<!-- MIOS SAFE MOTION START -->
+<script>
+(() => {
+  const root = document.documentElement;
+  const systemReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const enabled = () => !systemReduced.matches && !root.classList.contains('mios-reduce-motion');
+  const headingNodes = [...document.querySelectorAll('.hero h1, section h2')];
+  const cardNodes = [...document.querySelectorAll('.game, .founder, .contact-card')];
+  const typingNodes = [...document.querySelectorAll('.hero .label, .signal .code.top')];
+  const observed = [...headingNodes, ...cardNodes, ...typingNodes];
+  headingNodes.forEach(el => el.classList.add('mios-motion-heading'));
+  cardNodes.forEach(el => el.classList.add('mios-motion-card'));
+  typingNodes.forEach(el => el.classList.add('mios-motion-typing'));
+  // Animation only starts on first sight; content is visible if JS or observation fails.
+  const seen = new WeakSet();
+  const reveal = el => {
+    if (seen.has(el)) return;
+    seen.add(el);
+    if (enabled()) el.classList.add('mios-motion-visible');
+  };
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        reveal(entry.target);
+        observer.unobserve(entry.target);
+      }
+    }, {threshold:.08});
+    observed.forEach(el => observer.observe(el));
+  } else observed.forEach(reveal);
+
+  const buttons = [...document.querySelectorAll('.btn, .mios-game-action, .mios-codex-open, .mios-waypoint')];
+  buttons.forEach(el => {
+    el.classList.add('mios-motion-button');
+    el.addEventListener('click', () => {
+      if (!enabled()) return;
+      el.classList.remove('mios-motion-clicked');
+      void el.offsetWidth;
+      el.classList.add('mios-motion-clicked');
+    });
+    el.addEventListener('animationend', event => {
+      if (event.target === el) el.classList.remove('mios-motion-clicked');
+    });
+  });
+  // Boot effect only animates opacity on existing bars, never their dimensions/position.
+  if (enabled()) {
+    for (const el of document.querySelectorAll('.mios-scroll-progress,.mios-profile')) {
+      el.classList.add('mios-motion-boot');
+      el.addEventListener('animationend', () => el.classList.remove('mios-motion-boot'), {once:true});
+    }
+    const brand = document.querySelector('.hero h1');
+    if (brand) {
+      brand.classList.add('mios-motion-glitch');
+      window.setTimeout(() => brand.classList.remove('mios-motion-glitch'),450);
+    }
+  }
+  const radar = document.querySelector('.signal');
+  if (radar) {
+    const sonar = document.createElement('span');
+    sonar.className = 'mios-motion-sonar';
+    sonar.setAttribute('aria-hidden','true');
+    radar.appendChild(sonar);
+  }
+  // Flash only for an increase in real completed-quest count.
+  const questButton = document.getElementById('miosQuestsButton');
+  if (questButton && 'MutationObserver' in window) {
+    const getCount = () => Number.parseInt((document.getElementById('miosQuestCount')?.textContent || '0').split('/')[0],10) || 0;
+    let lastCount = getCount();
+    const observer = new MutationObserver(() => {
+      const next = getCount();
+      if (next > lastCount && enabled()) {
+        questButton.classList.remove('mios-motion-quest-flash');
+        void questButton.offsetWidth;
+        questButton.classList.add('mios-motion-quest-flash');
+      }
+      lastCount = next;
+    });
+    const count = document.getElementById('miosQuestCount');
+    if(count) observer.observe(count, {childList:true,characterData:true,subtree:true});
+    questButton.addEventListener('animationend',() => questButton.classList.remove('mios-motion-quest-flash'));
+  }
+  // Reduced Motion applies immediately even after the visitor changes the setting.
+  window.addEventListener('mios:preferenceschange', () => {
+    if (!enabled()) document.querySelectorAll('.mios-motion-boot,.mios-motion-glitch,.mios-motion-clicked,.mios-motion-quest-flash')
+      .forEach(el=>el.classList.remove('mios-motion-boot','mios-motion-glitch','mios-motion-clicked','mios-motion-quest-flash'));
+  });
+})();
+</script>
+<!-- MIOS SAFE MOTION END -->
+
+
+<div id="miosPrivacyBanner" class="mios-privacy" role="region" aria-labelledby="miosPrivacyTitle" translate="no" hidden>
+  <div class="mios-privacy-head"><h2 class="mios-privacy-title" id="miosPrivacyTitle" data-en="COOKIE PREFERENCES" data-tr="ÇEREZ TERCİHLERİ">COOKIE PREFERENCES</h2><button class="mios-privacy-lang" type="button" data-mios-language>TR</button></div>
+  <p data-en="We store your site settings and game-like progress locally. With your permission, Google Analytics can measure visits. Analytics is optional; rejecting it does not restrict access to the site." data-tr="Site ayarlarınızı ve oyun benzeri ilerlemenizi cihazınızda saklarız. İzninizle Google Analytics ziyaretleri ölçebilir. Analitik isteğe bağlıdır; reddetmeniz siteye erişiminizi kısıtlamaz."></p>
+  <p id="miosAnalyticsPaused" hidden data-en="Analytics is currently disabled by the site operator. No analytics tag will load." data-tr="Analitik şu anda site yöneticisi tarafından kapalıdır. Analitik etiketi yüklenmez."></p>
+  <button type="button" class="mios-privacy-inline" data-mios-privacy="policy" data-en="Privacy &amp; cookie policy" data-tr="Gizlilik ve çerez politikası"></button>
+  <div class="mios-privacy-actions">
+    <button type="button" id="miosPrivacyAccept" data-en="ACCEPT ALL" data-tr="TÜMÜNÜ KABUL ET"></button>
+    <button type="button" id="miosPrivacyReject" data-en="REJECT ALL" data-tr="TÜMÜNÜ REDDET"></button>
+    <button type="button" id="miosPrivacyManage" class="mios-privacy-wide" aria-expanded="false" aria-controls="miosPrivacyDetails" data-en="MANAGE PREFERENCES" data-tr="TERCİHLERİ YÖNET"></button>
+  </div>
+  <div id="miosPrivacyDetails" hidden>
+    <div class="mios-privacy-row"><div><strong data-en="Local site features" data-tr="Yerel site işlevleri"></strong><p data-en="Stores consent choice, UI settings and local progress; no analytics transmission." data-tr="Onay tercihi, arayüz ayarları ve yerel ilerleme; analitik aktarımı yapılmaz."></p></div><small data-en="LOCAL" data-tr="YEREL"></small></div>
+    <label class="mios-privacy-row" for="miosPrivacyAnalytics"><span><strong data-en="Analytics (Google Analytics)" data-tr="Analitik (Google Analytics)"></strong><p data-en="Optional visit and interaction statistics." data-tr="İsteğe bağlı ziyaret ve etkileşim istatistikleri."></p></span><input type="checkbox" id="miosPrivacyAnalytics" aria-describedby="miosAnalyticsChoiceNote"></label>
+    <p id="miosAnalyticsChoiceNote" hidden data-en="Analytics is currently disabled. You can save your preference, but accepting it will not start analytics or any analytics data collection. If analytics is enabled in the future, we will ask for your consent again." data-tr="Analitik şu anda kapalıdır. Tercihinizi kaydedebilirsiniz ancak onay vermeniz analitiği veya analitik veri toplamayı başlatmaz. İleride analitik etkinleştirilirse yeniden onayınız istenir."></p>
+    <div class="mios-privacy-actions"><button class="mios-privacy-wide" type="button" id="miosPrivacySave" data-en="SAVE MY CHOICE" data-tr="TERCİHİMİ KAYDET"></button></div>
+  </div>
+</div>
+<dialog id="miosPrivacyPolicy" class="mios-privacy" aria-labelledby="miosPolicyTitle" translate="no">
+  <div class="mios-privacy-head"><h2 id="miosPolicyTitle" class="mios-privacy-title" data-en="PRIVACY &amp; COOKIE POLICY" data-tr="GİZLİLİK VE ÇEREZ POLİTİKASI"></h2><button type="button" data-mios-language>TR</button><button type="button" id="miosPolicyClose" data-en="CLOSE" data-tr="KAPAT"></button></div>
+  <div data-policy-lang="en" lang="en">
+    <p>Updated: 26 November 2026. This notice covers miossoftgames.com, not its games or third-party websites.</p>
+    <h3>1. Data controller and contact</h3><p>Musa Onay, operating the independent studio Miossoft Games. Contact: <a href="mailto:miossoftgames@gmail.com">miossoftgames@gmail.com</a>.</p>
+    <h3>2. Hosting and contact</h3><p>GitHub Pages hosts this website and records visitors' IP addresses for security. Technical request information is processed to deliver the site and maintain security. If you email us, your address and message are processed to answer your request, on the basis of legitimate interests or where applicable the establishment, exercise or protection of a right. We keep correspondence only as necessary for the request and applicable legal obligations. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's privacy statement</a>.</p>
+    <h3>3. Local storage</h3><p>The following entries are stored in your browser, not sent to an analytics server by these local features. They provide the requested interface and game-like functions, or retain your privacy choice.</p>
+    <ul><li><code>miossoft.privacy.consent.v1</code> — privacy choice and time; renewed after 180 days.</li><li><code>miossoft.ui.preferences.v1</code> — cursor, sound, motion and interface preferences.</li><li><code>miossoft.studio.progress.v1</code> — local quests, achievements and XP progress.</li><li><code>miossoft.gameextras.v1</code> — extra interface preference.</li></ul><p>Interface and progress entries persist until reset or browser data is cleared. You can reset progress in Options on the home page. Local storage is not an HTTP cookie.</p>
+    <h3>4. Optional analytics</h3><p>When enabled by the operator and expressly accepted, Google Analytics 4 (Google) receives visit and interaction information such as page views, device/browser details, approximate location and pseudonymous identifiers to produce site usage statistics. The legal basis for optional analytics is explicit consent. Advertising features are disabled by the website configuration. The tag is not loaded before permission.</p><ul><li><code>_ga</code> — distinguishes visitors.</li><li><code>_ga_F8WJFXPVGS</code> — maintains session state.</li></ul><p>The configured cookie lifetime is 180 days without automatic extension. Analytics account event retention and any additional cookies depend on the provider settings. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google privacy policy</a>.</p>
+    <h3>5. Recipients and international transfers</h3><p>Hosting and email providers may process data outside Türkiye. Google is an additional recipient if analytics is activated. Consent to analytics is not itself a safeguard for routine international transfers; the operator must verify the applicable conditions under Article 9 of Law No. 6698 before enabling analytics.</p>
+    <h3>6. Your choices and rights</h3><p>Use Cookie preferences to withdraw or change analytics permission at any time. Rejecting analytics does not affect access. You can clear stored data using your browser. Under Article 11 of Law No. 6698, you may request information about processing, purposes, recipients and transfers, correction or deletion where applicable, notification of recipients, object to adverse results of automated processing and seek compensation for unlawful processing. Contact the controller using the address above; statutory application procedures apply.</p>
+  </div>
+  <div data-policy-lang="tr" lang="tr" hidden>
+    <p>Güncelleme: 26 Kasım 2026. Bu metin miossoftgames.com sitesini kapsar; oyunları veya üçüncü taraf siteleri kapsamaz.</p>
+    <h3>1. Veri sorumlusu ve iletişim</h3><p>Bağımsız Miossoft Games stüdyosu adıyla faaliyet gösteren Musa Onay. İletişim: <a href="mailto:miossoftgames@gmail.com">miossoftgames@gmail.com</a>.</p>
+    <h3>2. Barındırma ve iletişim</h3><p>Site GitHub Pages üzerinde barındırılır. GitHub güvenlik amacıyla ziyaretçilerin IP adreslerini kaydeder. Teknik istek bilgileri sitenin sunulması ve güvenliğinin sağlanması için işlenir. E-posta gönderirseniz adresiniz ve mesajınız talebinizi yanıtlamak için meşru menfaat veya uygulanabildiği ölçüde bir hakkın tesisi, kullanılması ya da korunması sebebiyle işlenir. Yazışmalar talep ve ilgili yasal yükümlülükler için gerekli olduğu sürece saklanır. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub gizlilik bildirimi</a>.</p>
+    <h3>3. Yerel depolama</h3><p>Aşağıdaki kayıtlar tarayıcınızda saklanır; bu yerel işlevler tarafından bir analitik sunucusuna gönderilmez. Talep edilen arayüz ve oyun benzeri işlevleri sağlamak veya gizlilik tercihinizi hatırlamak için kullanılır.</p>
+    <ul><li><code>miossoft.privacy.consent.v1</code> — gizlilik tercihi ve zamanı; 180 gün sonra yenilenir.</li><li><code>miossoft.ui.preferences.v1</code> — imleç, ses, hareket ve arayüz tercihleri.</li><li><code>miossoft.studio.progress.v1</code> — yerel görev, başarım ve XP ilerlemesi.</li><li><code>miossoft.gameextras.v1</code> — ek arayüz tercihi.</li></ul><p>Arayüz ve ilerleme kayıtları sıfırlanana veya tarayıcı verileri temizlenene kadar kalır. Ana sayfadaki Options bölümünden ilerlemeyi sıfırlayabilirsiniz. Yerel depolama bir HTTP çerezi değildir.</p>
+    <h3>4. İsteğe bağlı analitik</h3><p>Site yöneticisi etkinleştirdiğinde ve açıkça izin verdiğinizde Google Analytics 4 (Google); sayfa görüntüleme, cihaz ve tarayıcı bilgileri, yaklaşık konum ve takma adlı tanımlayıcılar gibi ziyaret ve etkileşim verilerini site kullanım istatistikleri için alır. İsteğe bağlı analitiğin hukuki sebebi açık rızadır. Reklam özellikleri site yapılandırmasında kapalıdır. İzin öncesinde etiket yüklenmez.</p><ul><li><code>_ga</code> — ziyaretçileri ayırt eder.</li><li><code>_ga_F8WJFXPVGS</code> — oturum durumunu saklar.</li></ul><p>Yapılandırılan çerez süresi otomatik uzatma olmaksızın 180 gündür. Analitik hesabındaki olay saklama süresi ve ek çerezler sağlayıcı ayarlarına bağlıdır. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google gizlilik politikası</a>.</p>
+    <h3>5. Alıcılar ve yurt dışına aktarım</h3><p>Barındırma ve e-posta sağlayıcıları verileri Türkiye dışında işleyebilir. Analitik etkinleştirilirse Google da alıcıdır. Analitik rızası, düzenli yurt dışı aktarımı için tek başına yeterli güvence değildir; analitik etkinleştirilmeden önce 6698 sayılı Kanun'un 9. maddesindeki uygulanabilir şartlar site yöneticisi tarafından doğrulanmalıdır.</p>
+    <h3>6. Tercihleriniz ve haklarınız</h3><p>Çerez tercihleri bölümünden analitik izninizi her zaman geri çekebilir veya değiştirebilirsiniz. Reddetmek erişimi etkilemez. Tarayıcınızdan kayıtları temizleyebilirsiniz. 6698 sayılı Kanun'un 11. maddesi kapsamında işlenme durumunu, amaçları, alıcıları ve aktarımları öğrenme; şartları varsa düzeltme ve silme, alıcılara bildirim, otomatik işlem sonucu aleyhe çıkan sonuca itiraz ve hukuka aykırı işleme nedeniyle zarar giderimi talep etme haklarınız vardır. Yukarıdaki iletişim adresinden veri sorumlusuna başvurabilirsiniz; yasal başvuru usulleri geçerlidir.</p>
+  </div>
+</dialog>
+<script id="miosPrivacyUI">
+(() => {
+  const api=window.MiosPrivacy, banner=document.getElementById('miosPrivacyBanner'), details=document.getElementById('miosPrivacyDetails'), manage=document.getElementById('miosPrivacyManage'), checkbox=document.getElementById('miosPrivacyAnalytics'), policy=document.getElementById('miosPrivacyPolicy');
+  let lang = (navigator.language || 'en').toLowerCase().startsWith('tr') ? 'tr' : 'en';
+  let returnFocus=null;
+  function renderLang() {
+    for (const node of document.querySelectorAll('[data-en][data-tr]')) node.textContent=node.dataset[lang];
+    for (const node of document.querySelectorAll('[data-policy-lang]')) node.hidden=node.dataset.policyLang!==lang;
+    for (const node of document.querySelectorAll('[data-mios-language]')) { node.textContent=lang==='tr'?'EN':'TR'; node.setAttribute('aria-label',lang==='tr'?'Switch to English':'Türkçeye geç'); }
+    banner.lang=policy.lang=lang;
+  }
+  function expand(open) {details.hidden=!open;manage.setAttribute('aria-expanded',String(open));}
+  function show(settings, focus) {banner.hidden=false; checkbox.checked=Boolean(api.get()?.requestedAnalytics ?? api.get()?.analytics);expand(settings);if(focus) manage.focus();}
+  function choose(value) {api.save(value);banner.hidden=true;expand(false);if(returnFocus && returnFocus.isConnected) returnFocus.focus();returnFocus=null;}
+  document.getElementById('miosPrivacyAccept').addEventListener('click',()=>choose(true));
+  document.getElementById('miosPrivacyReject').addEventListener('click',()=>choose(false));
+  document.getElementById('miosPrivacySave').addEventListener('click',()=>choose(checkbox.checked));
+  manage.addEventListener('click',()=>expand(details.hidden));
+  for (const btn of document.querySelectorAll('[data-mios-privacy]')) btn.addEventListener('click',()=>{
+    if(btn.dataset.miosPrivacy==='settings'){returnFocus=btn;show(true,true);}else if(!policy.open){
+      policy.showModal();
+      const crosshair=document.getElementById('miosCursor');
+      if(crosshair) policy.appendChild(crosshair);
+    }
+  });
+  policy.addEventListener('close',()=>{
+    const crosshair=document.getElementById('miosCursor');
+    if(crosshair && crosshair.parentElement===policy) document.body.appendChild(crosshair);
+  });
+  document.getElementById('miosPolicyClose').addEventListener('click',()=>policy.close());
+  for (const btn of document.querySelectorAll('[data-mios-language]')) btn.addEventListener('click',()=>{lang=lang==='tr'?'en':'tr';renderLang();});
+  document.getElementById('miosAnalyticsPaused').hidden=api.enabled;
+  document.getElementById('miosAnalyticsChoiceNote').hidden=api.enabled;
+  renderLang();
+  if (!api.get()) show(false,false);
+  window.addEventListener('mios:privacychange',()=>{if(!api.get())show(false,false);else{banner.hidden=true;expand(false);}});
+})();
+</script>
+
+</body>
 </html>

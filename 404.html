@@ -2,15 +2,81 @@
 <html lang="en">
   <head>
 
-        <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F8WJFXPVGS"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-    
-      gtag('config', 'G-F8WJFXPVGS');
-    </script>
+        <!-- MIOS PRIVACY: Google Analytics is loaded only after explicit opt-in. -->
+<script>
+(() => {
+  'use strict';
+  const ID = 'G-F8WJFXPVGS';
+  // Set true ONLY after verifying the applicable international-transfer safeguards.
+  const ANALYTICS_ENABLED = false;
+  const KEY = 'miossoft.privacy.consent.v1';
+  const TTL = 180 * 24 * 60 * 60 * 1000;
+  const disabled = 'ga-disable-' + ID;
+  let current = null, started = false;
+  function read() {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY));
+      if (v && v.version === 1 && v.available === ANALYTICS_ENABLED && typeof v.analytics === 'boolean' &&
+          Number.isFinite(v.time) && Date.now() >= v.time && Date.now() - v.time < TTL) return v;
+    } catch (_) {}
+    return null;
+  }
+  function eraseAnalyticsCookies() {
+    const names = document.cookie.split(';').map(x => x.trim().split('=')[0])
+      .filter(x => /^(_ga($|_)|_gid$|_gat($|_)|_gac_|_gcl_)/.test(x));
+    const labels = location.hostname.split('.');
+    const domains = ['', ...labels.slice(0, -1).map((_, i) => labels.slice(i).join('.'))];
+    const paths = new Set(['/']);
+    const parts = location.pathname.split('/').filter(Boolean);
+    for (let i = 1; i <= parts.length; i++) paths.add('/' + parts.slice(0, i).join('/'));
+    for (const name of names) for (const domain of domains) for (const path of paths) {
+      document.cookie = name + '=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=' + path + (domain ? '; Domain=' + domain : '');
+    }
+  }
+  function start() {
+    if (!ANALYTICS_ENABLED || started || !current || !current.analytics) return;
+    started = true;
+    window[disabled] = false;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ window.dataLayer.push(arguments); };
+    window.gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+    window.gtag('consent','update',{analytics_storage:'granted',ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied'});
+    window.gtag('js',new Date());
+    window.gtag('config', ID, {allow_google_signals:false,allow_ad_personalization_signals:false,cookie_expires:15552000,cookie_update:false});
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID;
+    document.head.appendChild(script);
+  }
+  function apply(next) {
+    current = next;
+    if (ANALYTICS_ENABLED && next && next.analytics) { start(); return; }
+    window[disabled] = true;
+    eraseAnalyticsCookies();
+    if (started) location.reload(); // remove the running tag, not just its cookies
+  }
+  function save(analytics) {
+    const next = {version:1,available:ANALYTICS_ENABLED,analytics:Boolean(analytics && ANALYTICS_ENABLED),requestedAnalytics:Boolean(analytics),time:Date.now()};
+    try { localStorage.setItem(KEY, JSON.stringify(next)); } catch (_) {}
+    apply(next);
+  }
+  window[disabled] = true;
+  apply(read());
+  window.MiosPrivacy = {get:() => current, save, enabled:ANALYTICS_ENABLED};
+  window.addEventListener('storage', e => {
+    if (e.key === KEY || e.key === null) {
+      apply(read());
+      window.dispatchEvent(new Event('mios:privacychange'));
+    }
+  });
+  // An open tab must not keep measuring after consent expires.
+  window.addEventListener('pageshow', e => { if (e.persisted) { apply(read()); window.dispatchEvent(new Event('mios:privacychange')); } });
+  setInterval(() => {
+    if (current && Date.now() - current.time >= TTL) { apply(null); window.dispatchEvent(new Event('mios:privacychange')); }
+  }, 60000);
+})();
+</script>
+<!-- MIOS PRIVACY END -->
         
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -144,9 +210,258 @@
           transition: none !important;
         }
       }
-    </style>
-  </head>
+    
+/* MIOS CURSOR STYLES START */
+  /* Custom cursor: HTML/CSS reticle, no image asset required. */
+  .mios-cursor{
+    position:fixed;top:0;left:0;
+    width:0;height:0;
+    z-index:2147483647;
+    pointer-events:none;
+    visibility:hidden;
+    color:var(--neon);
+  }
+  .mios-cursor.is-visible{visibility:visible;}
+  .mios-cursor__reticle{
+    position:absolute;left:0;top:0;
+    width:32px;height:32px;
+    transform:translate(-50%,-50%);
+    background:
+      linear-gradient(currentColor,currentColor) center top / 1px 7px,
+      linear-gradient(currentColor,currentColor) center bottom / 1px 7px,
+      linear-gradient(currentColor,currentColor) left center / 7px 1px,
+      linear-gradient(currentColor,currentColor) right center / 7px 1px;
+    background-repeat:no-repeat;
+    filter:drop-shadow(0 0 1px #060806) drop-shadow(0 0 3px rgba(16,219,5,.5));
+    transition:width .16s ease, height .16s ease;
+  }
+  .mios-cursor__reticle::after{
+    content:"";
+    position:absolute;left:50%;top:50%;
+    width:3px;height:3px;
+    background:currentColor;
+    transform:translate(-50%,-50%);
+  }
+  .mios-cursor.is-hovering .mios-cursor__reticle{width:26px;height:26px;}
+  .mios-cursor.is-pressed .mios-cursor__reticle{width:22px;height:22px;}
+
+  /* Hide the system pointer only while the replacement is visible. */
+  @media (hover:hover) and (pointer:fine){
+    html.mios-cursor-active, html.mios-cursor-active *{cursor:none !important;}
+  }
+  @media (hover:none), (pointer:coarse){
+    .mios-cursor{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .mios-cursor__reticle{transition:none;}
+  }
+/* MIOS CURSOR STYLES END */
+
+/* MIOS ERROR HEALTH STYLES START */
+      /* The error-page health bar is always full and red. */
+      .mios-error-health {
+        --mios-health-rgb: 255, 77, 77;
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 172px;
+        height: 19px;
+        padding: 5px 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 14;
+        pointer-events: none;
+        border: 1px solid rgba(16, 219, 5, 0.24);
+        border-radius: 2px;
+        background: rgba(6, 8, 6, 0.8);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      }
+      .mios-error-health__health {
+        flex: 0 0 7px;
+        width: 7px;
+        height: 7px;
+        color: var(--neon);
+        opacity: 0.72;
+        background:
+          linear-gradient(currentColor, currentColor) center / 7px 1px,
+          linear-gradient(currentColor, currentColor) center / 1px 7px;
+        background-repeat: no-repeat;
+      }
+      .mios-error-health__meter {
+        flex: 1;
+        height: 5px;
+        position: relative;
+        overflow: hidden;
+        background: rgba(16, 219, 5, 0.1);
+        box-shadow: 0 0 6px rgba(16, 219, 5, 0.12);
+      }
+      .mios-error-health__meter::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(90deg,
+          transparent 0,
+          transparent calc(10% - 1px),
+          rgba(6, 8, 6, 0.9) calc(10% - 1px),
+          rgba(6, 8, 6, 0.9) 10%);
+      }
+      .mios-error-health__fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: rgb(var(--mios-health-rgb));
+        transform: scaleX(1);
+        transform-origin: left center;
+      }
+      @media (max-width: 700px) {
+        .mios-error-health {
+          top: 18px;
+          width: 148px;
+        }
+      }
+/* MIOS ERROR HEALTH STYLES END */
+
+/* MIOS OPTIONS STYLES START */
+      .mios-options-toggle,
+      .mios-options-panel {
+        position: fixed;
+        left: 20px;
+        z-index: 80;
+        border: 1px solid var(--bright);
+        background: rgba(6, 8, 6, 0.96);
+        color: var(--text);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+      }
+      .mios-options-toggle {
+        bottom: 20px;
+        height: 36px;
+        padding: 0 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font: 700 10px monospace;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+      .mios-options-toggle svg { width: 15px; height: 15px; color: var(--neon); }
+      .mios-options-toggle:hover,
+      .mios-options-toggle[aria-expanded="true"] { border-color: var(--neon); color: var(--neon); }
+      .mios-options-panel {
+        bottom: 64px;
+        width: min(304px, calc(100vw - 32px));
+        max-height: calc(100vh - 90px);
+        max-height: calc(100dvh - 90px);
+        overflow-y: auto;
+        padding: 17px;
+        border-top: 2px solid var(--neon);
+      }
+      .mios-options-toggle[hidden],
+      .mios-options-panel[hidden] { display: none; }
+      .mios-options-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .mios-options-heading strong { font: 700 12px monospace; letter-spacing: 0.12em; }
+      .mios-options-close {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid var(--bright);
+        background: transparent;
+        color: var(--muted);
+        font: 20px/1 Arial, sans-serif;
+        cursor: pointer;
+      }
+      .mios-options-close:hover { color: var(--neon); border-color: var(--neon); }
+      .mios-option-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 0; border-bottom: 1px solid var(--border); }
+      .mios-option-row:last-child { padding-bottom: 3px; border-bottom: 0; }
+      .mios-option-label { display: block; color: var(--text); font: 700 10px monospace; letter-spacing: 0.06em; }
+      .mios-option-note { display: block; margin-top: 6px; color: var(--muted); font: 11px/1.5 Arial, sans-serif; }
+      .mios-option-switch {
+        flex: 0 0 46px;
+        min-height: 29px;
+        padding: 4px;
+        border: 1px solid var(--bright);
+        background: transparent;
+        color: var(--muted);
+        font: 700 9px monospace;
+        cursor: pointer;
+      }
+      .mios-option-switch[aria-checked="true"] { color: var(--neon); border-color: var(--dark, #087a03); background: rgba(16, 219, 5, 0.07); }
+      .mios-option-switch:disabled { opacity: 0.55; cursor: not-allowed; }
+      .mios-options-toggle:focus-visible,
+      .mios-options-close:focus-visible,
+      .mios-option-switch:focus-visible { outline: 2px solid var(--neon); outline-offset: 4px; }
+      html.mios-native-cursor .mios-cursor { display: none !important; }
+      html.mios-reduce-motion { scroll-behavior: auto !important; }
+      html.mios-reduce-motion *,
+      html.mios-reduce-motion *::before,
+      html.mios-reduce-motion *::after { animation: none !important; transition: none !important; }
+      html.mios-reduce-motion .mios-reveal { opacity: 1 !important; transform: none !important; }
+      html.mios-reduce-motion .game:hover,
+      html.mios-reduce-motion .contact-card:hover,
+      html.mios-reduce-motion .game:hover .game-image,
+      html.mios-reduce-motion .mios-secret-toast { transform: none !important; }
+      html.mios-reduce-motion .game:hover .symbol { transform: translate(-50%, -50%) !important; }
+      .signal[role="button"] { touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+      .signal[role="button"]:focus-visible { outline: 1px solid var(--neon); outline-offset: 9px; }
+      .mios-radar-wave { position: absolute; inset: 0; border: 1px solid var(--neon); border-radius: 50%; opacity: 0; transform: scale(0.15); pointer-events: none; }
+      .signal.is-scanning .mios-radar-wave { animation: mios-radar-scan 0.82s ease-out both; }
+      .signal.is-scanning .mios-radar-wave--delayed { animation-delay: 0.13s; }
+      .signal.is-scan-static { border-color: var(--neon); box-shadow: 0 0 15px rgba(16, 219, 5, 0.12); }
+      @keyframes mios-radar-scan {
+        0% { opacity: 0.7; transform: scale(0.15); }
+        70% { opacity: 0.22; }
+        100% { opacity: 0; transform: scale(1.08); }
+      }
+      @media (max-width: 700px) {
+        .mios-options-toggle { left: 16px; bottom: 16px; }
+        .mios-options-panel { left: 16px; bottom: 60px; }
+      }
+/* MIOS OPTIONS STYLES END */
+</style>
+  
+<style id="miosPrivacyStyles">
+  .mios-privacy-links {display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;align-items:center;margin:8px 0;}
+  .mios-privacy-link {border:0;background:none;color:var(--text);font:700 11px/1.4 monospace;text-decoration:underline;text-underline-offset:3px;padding:6px 2px;cursor:pointer;}
+  #miosPrivacyBanner[hidden], #miosPrivacyDetails[hidden], .mios-privacy [hidden] {display:none!important;}
+  .mios-privacy {color:var(--text);font:14px/1.5 Arial,Helvetica,sans-serif;text-align:left;letter-spacing:normal;}
+  #miosPrivacyBanner {position:fixed;z-index:2147483100;left:50%;bottom:76px;transform:translateX(-50%);width:min(660px,calc(100% - 28px));max-height:calc(100vh - 100px);max-height:calc(100dvh - 100px);overflow:auto;overscroll-behavior:contain;padding:19px;background:var(--surface,var(--bg));border:1px solid var(--bright);border-top:2px solid var(--neon);box-shadow:0 12px 44px #0008;}
+  .mios-privacy-head {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .mios-privacy .mios-privacy-title {color:var(--neon);font:700 14px/1.4 monospace;letter-spacing:.06em;margin:0;}
+  .mios-privacy p {max-width:none;margin:8px 0;color:var(--text);line-height:1.55;font-size:13px;}
+  .mios-privacy button {font:700 11px/1.4 monospace;letter-spacing:.025em;color:var(--text);background:var(--bg);border:1px solid var(--bright);padding:9px 10px;cursor:pointer;min-height:36px;}
+  .mios-privacy button:hover,.mios-privacy button:focus-visible,.mios-privacy-link:focus-visible {outline:2px solid var(--neon);outline-offset:2px;}
+  .mios-privacy .mios-privacy-lang {min-height:30px;padding:5px 8px;flex:none;}
+  .mios-privacy-actions {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+  .mios-privacy-actions button {min-width:0;min-height:43px;border-color:var(--neon);}
+  .mios-privacy-actions .mios-privacy-wide {grid-column:1/-1;border-color:var(--bright);}
+  .mios-privacy .mios-privacy-inline {padding:4px 0;min-height:26px;background:none;border:none;text-decoration:underline;color:var(--neon);}
+  #miosPrivacyDetails {border-top:1px solid var(--border);margin-top:12px;padding-top:10px;}
+  .mios-privacy-row {display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;}
+  .mios-privacy-row input {width:22px;height:22px;accent-color:var(--neon);flex:none;}
+  .mios-privacy small {color:var(--text);font-size:12px;}
+  #miosPrivacyPolicy {width:min(760px,calc(100% - 26px));max-height:85vh;max-height:85dvh;overflow:auto;padding:22px;color:var(--text);background:var(--surface,var(--bg));border:1px solid var(--bright);border-top:2px solid var(--neon);box-shadow:0 15px 60px #0009;}
+  #miosPrivacyPolicy::backdrop {background:#0009;}
+  #miosPrivacyPolicy h3 {font:700 14px/1.4 monospace;color:var(--neon);margin:18px 0 6px;}
+  #miosPrivacyPolicy a {display:inline;min-width:0;padding:0;border:0;background:none;color:var(--neon);font:inherit;letter-spacing:normal;text-decoration:underline;overflow-wrap:anywhere;box-shadow:none;transform:none;}
+  #miosPrivacyPolicy ul {padding-left:20px;margin:8px 0;font-size:13px;}
+  #miosPrivacyPolicy li {margin:5px 0;overflow-wrap:anywhere;}
+  @media(max-width:600px) {#miosPrivacyBanner {padding:14px;bottom:64px;max-height:calc(100dvh - 80px);} #miosPrivacyPolicy {padding:16px;} }
+  @media(max-height:450px) {#miosPrivacyBanner {bottom:10px;max-height:calc(100dvh - 20px);} }
+</style>
+
+</head>
   <body>
+<!-- MIOS ERROR HEALTH START -->
+<div class="mios-error-health" aria-hidden="true">
+  <span class="mios-error-health__health"></span>
+  <span class="mios-error-health__meter">
+    <span class="mios-error-health__fill"></span>
+  </span>
+</div>
+<!-- MIOS ERROR HEALTH END -->
+
     <main>
       <i class="corner tl"></i><i class="corner br"></i>
       <p class="code">ERROR_404 / SIGNAL_LOST</p>
@@ -157,6 +472,493 @@
         existed.
       </p>
       <a href="/">RETURN HOME <b>↗</b></a>
-    </main>
-  </body>
+    <div class="mios-privacy-links" translate="no">
+  <button type="button" class="mios-privacy-link" data-mios-privacy="settings" data-en="Cookie preferences" data-tr="Çerez tercihleri">Cookie preferences</button>
+  <button type="button" class="mios-privacy-link" data-mios-privacy="policy" data-en="Privacy &amp; cookie policy" data-tr="Gizlilik ve çerez politikası">Privacy &amp; cookie policy</button>
+</div>
+</main>
+  
+<!-- MIOS CURSOR START -->
+<div class="mios-cursor" id="miosCursor" aria-hidden="true">
+  <div class="mios-cursor__reticle"></div>
+</div>
+<script>
+
+  // Independent of the existing page scripts; shared by the home and 404 pages.
+  (() => {
+    const cursor = document.getElementById('miosCursor');
+    if (!cursor || !window.matchMedia || !window.PointerEvent) return;
+
+    const root = document.documentElement;
+    const finePointer = window.matchMedia('(hover:hover) and (pointer:fine)');
+    const nativeTargets = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), iframe, video[controls], audio[controls], [data-native-cursor], .game-unreleased, :disabled, [aria-disabled="true"]';
+    const clickTargets = 'a[href], button, [role="button"], [role="link"], summary, label[for]';
+    let x = 0;
+    let y = 0;
+    let inside = false;
+    let frame = 0;
+
+    function hide() {
+      root.classList.remove('mios-cursor-active');
+      cursor.classList.remove('is-visible', 'is-hovering', 'is-pressed');
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+    }
+
+    function render() {
+      frame = 0;
+      if (!finePointer.matches || !inside || root.classList.contains('mios-native-cursor')) return;
+      const privacyModal = document.getElementById('miosPrivacyPolicy');
+      if (privacyModal && privacyModal.open) {
+        const rect = privacyModal.getBoundingClientRect();
+        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+          hide();
+          return;
+        }
+      }
+      const target = document.elementFromPoint(x, y);
+      if (!target || target.closest(nativeTargets)) {
+        hide();
+        return;
+      }
+      const clickable = target.closest(clickTargets);
+      // Position first, then hide the system pointer: no invisible startup gap.
+      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      cursor.classList.add('is-visible');
+      cursor.classList.toggle('is-hovering', Boolean(clickable));
+      root.classList.add('mios-cursor-active');
+    }
+
+    function queueRender() {
+      if (!frame) frame = requestAnimationFrame(render);
+    }
+
+    document.addEventListener('pointermove', event => {
+      if (event.pointerType !== 'mouse' || !finePointer.matches || root.classList.contains('mios-native-cursor')) {
+        inside = false;
+        hide();
+        return;
+      }
+      x = event.clientX;
+      y = event.clientY;
+      inside = true;
+      queueRender();
+    }, {passive:true});
+
+    document.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'mouse' || !finePointer.matches || root.classList.contains('mios-native-cursor')) {
+        inside = false;
+        hide();
+        return;
+      }
+      if (event.button !== 0) return;
+      cursor.classList.add('is-pressed');
+    }, {passive:true});
+
+    window.addEventListener('pointerup', () => {
+      cursor.classList.remove('is-pressed');
+      if (inside) queueRender();
+    }, {passive:true});
+
+    function deactivate() {
+      inside = false;
+      hide();
+    }
+    root.addEventListener('pointerleave', deactivate);
+    document.addEventListener('pointercancel', deactivate);
+    window.addEventListener('blur', deactivate);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) deactivate();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Tab' || event.key === 'Escape') deactivate();
+    });
+    // The element beneath a stationary pointer can change when scrolling.
+    document.addEventListener('scroll', () => {
+      if (inside) queueRender();
+    }, {passive:true, capture:true});
+    window.addEventListener('resize', () => {
+      if (inside) queueRender();
+    }, {passive:true});
+    finePointer.addEventListener('change', deactivate);
+  })();
+
+</script>
+<!-- MIOS CURSOR END -->
+
+<!-- MIOS OPTIONS START -->
+<button class="mios-options-toggle" id="miosOptionsToggle" type="button" aria-expanded="false" aria-controls="miosOptionsPanel" hidden>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <path d="M3 6h18M3 12h18M3 18h18"></path>
+    <path d="M8 3v6M16 9v6M10 15v6"></path>
+  </svg>
+  OPTIONS
+</button>
+<div class="mios-options-panel" id="miosOptionsPanel" role="region" aria-labelledby="miosOptionsTitle" hidden>
+  <div class="mios-options-heading">
+    <strong id="miosOptionsTitle">OPTIONS</strong>
+    <button class="mios-options-close" id="miosOptionsClose" type="button" aria-label="Close options">×</button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosCursorLabel">CUSTOM CURSOR</span><span class="mios-option-note">Use the neon crosshair.</span></div>
+    <button class="mios-option-switch" id="miosCursorSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosCursorLabel"><span aria-hidden="true">ON</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosMotionLabel">REDUCED MOTION</span><span class="mios-option-note" id="miosMotionNote">Keep movement to a minimum.</span></div>
+    <button class="mios-option-switch" id="miosMotionSwitch" type="button" role="switch" aria-checked="false" aria-labelledby="miosMotionLabel" aria-describedby="miosMotionNote"><span aria-hidden="true">OFF</span></button>
+  </div>
+  <div class="mios-option-row">
+    <div><span class="mios-option-label" id="miosSoundLabel">UI SOUND</span><span class="mios-option-note" id="miosSoundNote">Soft hover and click sounds.</span></div>
+    <button class="mios-option-switch" id="miosSoundSwitch" type="button" role="switch" aria-checked="true" aria-labelledby="miosSoundLabel" aria-describedby="miosSoundNote"><span aria-hidden="true">ON</span></button>
+  </div>
+</div>
+<script>
+  (() => {
+    const root = document.documentElement;
+    const launcher = document.getElementById('miosOptionsToggle');
+    const panel = document.getElementById('miosOptionsPanel');
+    const close = document.getElementById('miosOptionsClose');
+    const cursorSwitch = document.getElementById('miosCursorSwitch');
+    const motionSwitch = document.getElementById('miosMotionSwitch');
+    const soundSwitch = document.getElementById('miosSoundSwitch');
+    const motionNote = document.getElementById('miosMotionNote');
+    const soundNote = document.getElementById('miosSoundNote');
+    const featureSwitches = {minimap:document.getElementById('miosMinimapSwitch'), quests:document.getElementById('miosQuestsSwitch'), achievements:document.getElementById('miosAchievementsSwitch')};
+    if (!launcher || !panel || !close || !cursorSwitch || !motionSwitch || !soundSwitch) return;
+    const systemMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const preferenceKey = 'miossoft.ui.preferences.v1';
+    let saved = null;
+    try { saved = JSON.parse(window.localStorage.getItem(preferenceKey)); } catch (_) {}
+    const settings = {
+      cursor: !saved || saved.cursor !== false,
+      reducedMotion: Boolean(saved && saved.reducedMotion === true),
+      sound: !saved || saved.sound !== false,
+      minimap: !saved || saved.minimap !== false,
+      quests: !saved || saved.quests !== false,
+      achievements: !saved || saved.achievements !== false
+    };
+    const AudioEngine = window.AudioContext || window.webkitAudioContext;
+    let audio = null;
+    let lastHover = -Infinity;
+    let open = false;
+
+    function reducedMotion() { return settings.reducedMotion || systemMotion.matches; }
+    function setSwitch(button, enabled) {
+      button.setAttribute('aria-checked', String(enabled));
+      button.querySelector('span').textContent = enabled ? 'ON' : 'OFF';
+    }
+    function applySettings() {
+      root.classList.toggle('mios-native-cursor', !settings.cursor);
+      root.classList.toggle('mios-reduce-motion', reducedMotion());
+      if (!settings.cursor) {
+        root.classList.remove('mios-cursor-active');
+        const cursor = document.getElementById('miosCursor');
+        if (cursor) cursor.classList.remove('is-visible', 'is-hovering', 'is-pressed');
+      }
+      setSwitch(cursorSwitch, settings.cursor);
+      setSwitch(motionSwitch, reducedMotion());
+      motionSwitch.disabled = systemMotion.matches;
+      motionNote.textContent = systemMotion.matches ? 'Enabled by your device.' : 'Keep movement to a minimum.';
+      if (!AudioEngine) settings.sound = false;
+      setSwitch(soundSwitch, settings.sound);
+      if (AudioEngine) soundNote.textContent = settings.sound && (!audio || audio.state !== 'running')
+        ? 'Click once to activate hover and click sounds.'
+        : 'Hover and click sounds.';
+      soundSwitch.disabled = !AudioEngine;
+      if (!AudioEngine) soundNote.textContent = 'Sound is unavailable in this browser.';
+      Object.keys(featureSwitches).forEach(name => {
+        root.classList.toggle(`mios-hide-${name}`, !settings[name]);
+        if (featureSwitches[name]) setSwitch(featureSwitches[name], settings[name]);
+      });
+      window.dispatchEvent(new Event('mios:preferenceschange'));
+    }
+    function saveSettings() {
+      try { window.localStorage.setItem(preferenceKey, JSON.stringify({cursor:settings.cursor, reducedMotion:settings.reducedMotion, sound:settings.sound, minimap:settings.minimap, quests:settings.quests, achievements:settings.achievements})); } catch (_) {}
+    }
+    function setOpen(next, restoreFocus) {
+      open = next;
+      panel.hidden = !open;
+      launcher.setAttribute('aria-expanded', String(open));
+      if (open) cursorSwitch.focus();
+      else if (restoreFocus) launcher.focus();
+    }
+    launcher.addEventListener('click', () => setOpen(!open, false));
+    close.addEventListener('click', () => setOpen(false, true));
+    document.addEventListener('pointerdown', event => {
+      if (open && !panel.contains(event.target) && !launcher.contains(event.target)) setOpen(false, false);
+    });
+    document.addEventListener('focusin', event => {
+      if (open && !panel.contains(event.target) && !launcher.contains(event.target)) setOpen(false, false);
+    });
+    document.addEventListener('keydown', event => {
+      if (open && event.key === 'Escape') setOpen(false, true);
+    });
+    cursorSwitch.addEventListener('click', () => {
+      settings.cursor = !settings.cursor;
+      applySettings();
+      saveSettings();
+    });
+    motionSwitch.addEventListener('click', () => {
+      if (systemMotion.matches) return;
+      settings.reducedMotion = !settings.reducedMotion;
+      applySettings();
+      saveSettings();
+    });
+    Object.keys(featureSwitches).forEach(name => {
+      const button = featureSwitches[name];
+      if (button) button.addEventListener('click', () => {
+        settings[name] = !settings[name];
+        applySettings();
+        saveSettings();
+      });
+    });
+    systemMotion.addEventListener('change', applySettings);
+
+    // Audio is enabled by default, but unlocks only through a real interaction.
+    let audioActivated = false;
+    let resumeTask = null;
+    let resumeContext = null;
+    function getAudio(allowCreate) {
+      if (!AudioEngine) return null;
+      try {
+        if (audio && audio.state === 'closed') audio = null;
+        if (!audio && allowCreate) audio = new AudioEngine();
+        return audio;
+      } catch (_) { return null; }
+    }
+    function resumeAudio(context, userGesture) {
+      if (context.state === 'running') return Promise.resolve(context);
+      if (resumeTask && resumeContext === context && !userGesture) return resumeTask;
+      try {
+        const pending = Promise.resolve(context.resume())
+          .then(() => {
+            if (context.state !== 'running') return null;
+            if (settings.sound) soundNote.textContent = 'Hover and click sounds.';
+            return context;
+          })
+          .catch(() => null);
+        resumeTask = pending;
+        resumeContext = context;
+        pending.then(() => {
+          if (resumeTask === pending) { resumeTask = null; resumeContext = null; }
+        });
+        return pending;
+      } catch (_) { return Promise.resolve(null); }
+    }
+    function unlockAudio() {
+      if (!settings.sound || document.hidden) return;
+      audioActivated = true;
+      const context = getAudio(true);
+      if (!context) return;
+      if (context.state === 'running') soundNote.textContent = 'Hover and click sounds.';
+      else resumeAudio(context, true);
+    }
+    function tone(context, type) {
+      if (!settings.sound || document.hidden || context.state !== 'running') return;
+      const sounds = {
+        hover: [1050, 1350, 0.055, 0.035, 'sine'],
+        click: [640, 320, 0.09, 0.05, 'triangle'],
+        enable: [720, 960, 0.12, 0.04, 'sine'],
+        radar: [280, 720, 0.19, 0.025, 'sine']
+      };
+      const [from, to, duration, volume, waveform] = sounds[type];
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const now = context.currentTime;
+      oscillator.type = waveform;
+      oscillator.frequency.setValueAtTime(from, now);
+      oscillator.frequency.exponentialRampToValueAtTime(to, now + duration);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(volume, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.01);
+    }
+    function playSound(type, userGesture) {
+      if (!settings.sound || document.hidden) return;
+      if (userGesture) audioActivated = true;
+      const context = getAudio(audioActivated);
+      if (!context) return;
+      if (context.state === 'running') {
+        tone(context, type);
+      } else if (audioActivated) {
+        const ready = resumeAudio(context, userGesture);
+        // Do not queue delayed hover sounds while the browser is unlocking audio.
+        if (type !== 'hover') ready.then(running => { if (running) tone(running, type); });
+      }
+    }
+    soundSwitch.addEventListener('click', () => {
+      if (!AudioEngine) return;
+      settings.sound = !settings.sound;
+      applySettings();
+      saveSettings();
+      if (settings.sound) {
+        if (!getAudio(true)) {
+          settings.sound = false;
+          applySettings();
+          saveSettings();
+          soundNote.textContent = 'Sound could not be started.';
+          return;
+        }
+        playSound('enable', true);
+      } else if (audio && audio.state === 'running') audio.suspend().catch(() => {});
+    });
+    function interactiveTarget(event) {
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return null;
+      const control = target.closest('a[href], button, [role="button"], [role="link"]');
+      if (!control || control.matches(':disabled, [aria-disabled="true"]')) return null;
+      return control;
+    }
+    // Mouse events cover actual mouse hover without relying on pointerType values.
+    document.addEventListener('mouseover', event => {
+      if (!settings.sound || (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents)) return;
+      const control = interactiveTarget(event);
+      if (!control || (event.relatedTarget && control.contains(event.relatedTarget))) return;
+      const now = Date.now();
+      if (now - lastHover < 90) return;
+      lastHover = now;
+      playSound('hover', false);
+    }, {passive:true, capture:true});
+    document.addEventListener('pointerdown', event => {
+      if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) unlockAudio();
+    }, {passive:true, capture:true});
+    document.addEventListener('keydown', event => {
+      if (!event.repeat && !['Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Tab'].includes(event.key)) unlockAudio();
+    }, {capture:true});
+    document.addEventListener('click', event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const control = interactiveTarget(event);
+      if (!control || control === soundSwitch || control.matches('.signal')) {
+        unlockAudio();
+        return;
+      }
+      playSound('click', true);
+    }, {capture:true});
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && audio && audio.state === 'running') audio.suspend().catch(() => {});
+    });
+
+    const radar = document.querySelector('.signal[role="button"]');
+    if (radar) {
+      const wave = document.createElement('span');
+      wave.className = 'mios-radar-wave';
+      wave.setAttribute('aria-hidden', 'true');
+      const delayed = wave.cloneNode();
+      delayed.classList.add('mios-radar-wave--delayed');
+      radar.append(wave, delayed);
+      let lastScan = -Infinity;
+      let resetTimer;
+      function scan() {
+        const now = Date.now();
+        if (now - lastScan < 650) return;
+        lastScan = now;
+        window.clearTimeout(resetTimer);
+        radar.classList.remove('is-scanning', 'is-scan-static');
+        if (reducedMotion()) {
+          radar.classList.add('is-scan-static');
+        } else {
+          void radar.offsetWidth;
+          radar.classList.add('is-scanning');
+        }
+        resetTimer = window.setTimeout(() => radar.classList.remove('is-scanning', 'is-scan-static'), reducedMotion() ? 300 : 1000);
+        playSound('radar', true);
+      }
+      radar.addEventListener('click', scan);
+      radar.addEventListener('keydown', event => {
+        if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) {
+          event.preventDefault();
+          scan();
+        }
+      });
+    }
+    applySettings();
+    launcher.hidden = false;
+  })();
+</script>
+<!-- MIOS OPTIONS END -->
+
+<div id="miosPrivacyBanner" class="mios-privacy" role="region" aria-labelledby="miosPrivacyTitle" translate="no" hidden>
+  <div class="mios-privacy-head"><h2 class="mios-privacy-title" id="miosPrivacyTitle" data-en="COOKIE PREFERENCES" data-tr="ÇEREZ TERCİHLERİ">COOKIE PREFERENCES</h2><button class="mios-privacy-lang" type="button" data-mios-language>TR</button></div>
+  <p data-en="We store your site settings and game-like progress locally. With your permission, Google Analytics can measure visits. Analytics is optional; rejecting it does not restrict access to the site." data-tr="Site ayarlarınızı ve oyun benzeri ilerlemenizi cihazınızda saklarız. İzninizle Google Analytics ziyaretleri ölçebilir. Analitik isteğe bağlıdır; reddetmeniz siteye erişiminizi kısıtlamaz."></p>
+  <p id="miosAnalyticsPaused" hidden data-en="Analytics is currently disabled by the site operator. No analytics tag will load." data-tr="Analitik şu anda site yöneticisi tarafından kapalıdır. Analitik etiketi yüklenmez."></p>
+  <button type="button" class="mios-privacy-inline" data-mios-privacy="policy" data-en="Privacy &amp; cookie policy" data-tr="Gizlilik ve çerez politikası"></button>
+  <div class="mios-privacy-actions">
+    <button type="button" id="miosPrivacyAccept" data-en="ACCEPT ALL" data-tr="TÜMÜNÜ KABUL ET"></button>
+    <button type="button" id="miosPrivacyReject" data-en="REJECT ALL" data-tr="TÜMÜNÜ REDDET"></button>
+    <button type="button" id="miosPrivacyManage" class="mios-privacy-wide" aria-expanded="false" aria-controls="miosPrivacyDetails" data-en="MANAGE PREFERENCES" data-tr="TERCİHLERİ YÖNET"></button>
+  </div>
+  <div id="miosPrivacyDetails" hidden>
+    <div class="mios-privacy-row"><div><strong data-en="Local site features" data-tr="Yerel site işlevleri"></strong><p data-en="Stores consent choice, UI settings and local progress; no analytics transmission." data-tr="Onay tercihi, arayüz ayarları ve yerel ilerleme; analitik aktarımı yapılmaz."></p></div><small data-en="LOCAL" data-tr="YEREL"></small></div>
+    <label class="mios-privacy-row" for="miosPrivacyAnalytics"><span><strong data-en="Analytics (Google Analytics)" data-tr="Analitik (Google Analytics)"></strong><p data-en="Optional visit and interaction statistics." data-tr="İsteğe bağlı ziyaret ve etkileşim istatistikleri."></p></span><input type="checkbox" id="miosPrivacyAnalytics" aria-describedby="miosAnalyticsChoiceNote"></label>
+    <p id="miosAnalyticsChoiceNote" hidden data-en="Analytics is currently disabled. You can save your preference, but accepting it will not start analytics or any analytics data collection. If analytics is enabled in the future, we will ask for your consent again." data-tr="Analitik şu anda kapalıdır. Tercihinizi kaydedebilirsiniz ancak onay vermeniz analitiği veya analitik veri toplamayı başlatmaz. İleride analitik etkinleştirilirse yeniden onayınız istenir."></p>
+    <div class="mios-privacy-actions"><button class="mios-privacy-wide" type="button" id="miosPrivacySave" data-en="SAVE MY CHOICE" data-tr="TERCİHİMİ KAYDET"></button></div>
+  </div>
+</div>
+<dialog id="miosPrivacyPolicy" class="mios-privacy" aria-labelledby="miosPolicyTitle" translate="no">
+  <div class="mios-privacy-head"><h2 id="miosPolicyTitle" class="mios-privacy-title" data-en="PRIVACY &amp; COOKIE POLICY" data-tr="GİZLİLİK VE ÇEREZ POLİTİKASI"></h2><button type="button" data-mios-language>TR</button><button type="button" id="miosPolicyClose" data-en="CLOSE" data-tr="KAPAT"></button></div>
+  <div data-policy-lang="en" lang="en">
+    <p>Updated: 26 November 2026. This notice covers miossoftgames.com, not its games or third-party websites.</p>
+    <h3>1. Data controller and contact</h3><p>Musa Onay, operating the independent studio Miossoft Games. Contact: <a href="mailto:miossoftgames@gmail.com">miossoftgames@gmail.com</a>.</p>
+    <h3>2. Hosting and contact</h3><p>GitHub Pages hosts this website and records visitors' IP addresses for security. Technical request information is processed to deliver the site and maintain security. If you email us, your address and message are processed to answer your request, on the basis of legitimate interests or where applicable the establishment, exercise or protection of a right. We keep correspondence only as necessary for the request and applicable legal obligations. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub's privacy statement</a>.</p>
+    <h3>3. Local storage</h3><p>The following entries are stored in your browser, not sent to an analytics server by these local features. They provide the requested interface and game-like functions, or retain your privacy choice.</p>
+    <ul><li><code>miossoft.privacy.consent.v1</code> — privacy choice and time; renewed after 180 days.</li><li><code>miossoft.ui.preferences.v1</code> — cursor, sound, motion and interface preferences.</li><li><code>miossoft.studio.progress.v1</code> — local quests, achievements and XP progress.</li><li><code>miossoft.gameextras.v1</code> — extra interface preference.</li></ul><p>Interface and progress entries persist until reset or browser data is cleared. You can reset progress in Options on the home page. Local storage is not an HTTP cookie.</p>
+    <h3>4. Optional analytics</h3><p>When enabled by the operator and expressly accepted, Google Analytics 4 (Google) receives visit and interaction information such as page views, device/browser details, approximate location and pseudonymous identifiers to produce site usage statistics. The legal basis for optional analytics is explicit consent. Advertising features are disabled by the website configuration. The tag is not loaded before permission.</p><ul><li><code>_ga</code> — distinguishes visitors.</li><li><code>_ga_F8WJFXPVGS</code> — maintains session state.</li></ul><p>The configured cookie lifetime is 180 days without automatic extension. Analytics account event retention and any additional cookies depend on the provider settings. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google privacy policy</a>.</p>
+    <h3>5. Recipients and international transfers</h3><p>Hosting and email providers may process data outside Türkiye. Google is an additional recipient if analytics is activated. Consent to analytics is not itself a safeguard for routine international transfers; the operator must verify the applicable conditions under Article 9 of Law No. 6698 before enabling analytics.</p>
+    <h3>6. Your choices and rights</h3><p>Use Cookie preferences to withdraw or change analytics permission at any time. Rejecting analytics does not affect access. You can clear stored data using your browser. Under Article 11 of Law No. 6698, you may request information about processing, purposes, recipients and transfers, correction or deletion where applicable, notification of recipients, object to adverse results of automated processing and seek compensation for unlawful processing. Contact the controller using the address above; statutory application procedures apply.</p>
+  </div>
+  <div data-policy-lang="tr" lang="tr" hidden>
+    <p>Güncelleme: 26 Kasım 2026. Bu metin miossoftgames.com sitesini kapsar; oyunları veya üçüncü taraf siteleri kapsamaz.</p>
+    <h3>1. Veri sorumlusu ve iletişim</h3><p>Bağımsız Miossoft Games stüdyosu adıyla faaliyet gösteren Musa Onay. İletişim: <a href="mailto:miossoftgames@gmail.com">miossoftgames@gmail.com</a>.</p>
+    <h3>2. Barındırma ve iletişim</h3><p>Site GitHub Pages üzerinde barındırılır. GitHub güvenlik amacıyla ziyaretçilerin IP adreslerini kaydeder. Teknik istek bilgileri sitenin sunulması ve güvenliğinin sağlanması için işlenir. E-posta gönderirseniz adresiniz ve mesajınız talebinizi yanıtlamak için meşru menfaat veya uygulanabildiği ölçüde bir hakkın tesisi, kullanılması ya da korunması sebebiyle işlenir. Yazışmalar talep ve ilgili yasal yükümlülükler için gerekli olduğu sürece saklanır. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">GitHub gizlilik bildirimi</a>.</p>
+    <h3>3. Yerel depolama</h3><p>Aşağıdaki kayıtlar tarayıcınızda saklanır; bu yerel işlevler tarafından bir analitik sunucusuna gönderilmez. Talep edilen arayüz ve oyun benzeri işlevleri sağlamak veya gizlilik tercihinizi hatırlamak için kullanılır.</p>
+    <ul><li><code>miossoft.privacy.consent.v1</code> — gizlilik tercihi ve zamanı; 180 gün sonra yenilenir.</li><li><code>miossoft.ui.preferences.v1</code> — imleç, ses, hareket ve arayüz tercihleri.</li><li><code>miossoft.studio.progress.v1</code> — yerel görev, başarım ve XP ilerlemesi.</li><li><code>miossoft.gameextras.v1</code> — ek arayüz tercihi.</li></ul><p>Arayüz ve ilerleme kayıtları sıfırlanana veya tarayıcı verileri temizlenene kadar kalır. Ana sayfadaki Options bölümünden ilerlemeyi sıfırlayabilirsiniz. Yerel depolama bir HTTP çerezi değildir.</p>
+    <h3>4. İsteğe bağlı analitik</h3><p>Site yöneticisi etkinleştirdiğinde ve açıkça izin verdiğinizde Google Analytics 4 (Google); sayfa görüntüleme, cihaz ve tarayıcı bilgileri, yaklaşık konum ve takma adlı tanımlayıcılar gibi ziyaret ve etkileşim verilerini site kullanım istatistikleri için alır. İsteğe bağlı analitiğin hukuki sebebi açık rızadır. Reklam özellikleri site yapılandırmasında kapalıdır. İzin öncesinde etiket yüklenmez.</p><ul><li><code>_ga</code> — ziyaretçileri ayırt eder.</li><li><code>_ga_F8WJFXPVGS</code> — oturum durumunu saklar.</li></ul><p>Yapılandırılan çerez süresi otomatik uzatma olmaksızın 180 gündür. Analitik hesabındaki olay saklama süresi ve ek çerezler sağlayıcı ayarlarına bağlıdır. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google gizlilik politikası</a>.</p>
+    <h3>5. Alıcılar ve yurt dışına aktarım</h3><p>Barındırma ve e-posta sağlayıcıları verileri Türkiye dışında işleyebilir. Analitik etkinleştirilirse Google da alıcıdır. Analitik rızası, düzenli yurt dışı aktarımı için tek başına yeterli güvence değildir; analitik etkinleştirilmeden önce 6698 sayılı Kanun'un 9. maddesindeki uygulanabilir şartlar site yöneticisi tarafından doğrulanmalıdır.</p>
+    <h3>6. Tercihleriniz ve haklarınız</h3><p>Çerez tercihleri bölümünden analitik izninizi her zaman geri çekebilir veya değiştirebilirsiniz. Reddetmek erişimi etkilemez. Tarayıcınızdan kayıtları temizleyebilirsiniz. 6698 sayılı Kanun'un 11. maddesi kapsamında işlenme durumunu, amaçları, alıcıları ve aktarımları öğrenme; şartları varsa düzeltme ve silme, alıcılara bildirim, otomatik işlem sonucu aleyhe çıkan sonuca itiraz ve hukuka aykırı işleme nedeniyle zarar giderimi talep etme haklarınız vardır. Yukarıdaki iletişim adresinden veri sorumlusuna başvurabilirsiniz; yasal başvuru usulleri geçerlidir.</p>
+  </div>
+</dialog>
+<script id="miosPrivacyUI">
+(() => {
+  const api=window.MiosPrivacy, banner=document.getElementById('miosPrivacyBanner'), details=document.getElementById('miosPrivacyDetails'), manage=document.getElementById('miosPrivacyManage'), checkbox=document.getElementById('miosPrivacyAnalytics'), policy=document.getElementById('miosPrivacyPolicy');
+  let lang = (navigator.language || 'en').toLowerCase().startsWith('tr') ? 'tr' : 'en';
+  let returnFocus=null;
+  function renderLang() {
+    for (const node of document.querySelectorAll('[data-en][data-tr]')) node.textContent=node.dataset[lang];
+    for (const node of document.querySelectorAll('[data-policy-lang]')) node.hidden=node.dataset.policyLang!==lang;
+    for (const node of document.querySelectorAll('[data-mios-language]')) { node.textContent=lang==='tr'?'EN':'TR'; node.setAttribute('aria-label',lang==='tr'?'Switch to English':'Türkçeye geç'); }
+    banner.lang=policy.lang=lang;
+  }
+  function expand(open) {details.hidden=!open;manage.setAttribute('aria-expanded',String(open));}
+  function show(settings, focus) {banner.hidden=false; checkbox.checked=Boolean(api.get()?.requestedAnalytics ?? api.get()?.analytics);expand(settings);if(focus) manage.focus();}
+  function choose(value) {api.save(value);banner.hidden=true;expand(false);if(returnFocus && returnFocus.isConnected) returnFocus.focus();returnFocus=null;}
+  document.getElementById('miosPrivacyAccept').addEventListener('click',()=>choose(true));
+  document.getElementById('miosPrivacyReject').addEventListener('click',()=>choose(false));
+  document.getElementById('miosPrivacySave').addEventListener('click',()=>choose(checkbox.checked));
+  manage.addEventListener('click',()=>expand(details.hidden));
+  for (const btn of document.querySelectorAll('[data-mios-privacy]')) btn.addEventListener('click',()=>{
+    if(btn.dataset.miosPrivacy==='settings'){returnFocus=btn;show(true,true);}else if(!policy.open){
+      policy.showModal();
+      const crosshair=document.getElementById('miosCursor');
+      if(crosshair) policy.appendChild(crosshair);
+    }
+  });
+  policy.addEventListener('close',()=>{
+    const crosshair=document.getElementById('miosCursor');
+    if(crosshair && crosshair.parentElement===policy) document.body.appendChild(crosshair);
+  });
+  document.getElementById('miosPolicyClose').addEventListener('click',()=>policy.close());
+  for (const btn of document.querySelectorAll('[data-mios-language]')) btn.addEventListener('click',()=>{lang=lang==='tr'?'en':'tr';renderLang();});
+  document.getElementById('miosAnalyticsPaused').hidden=api.enabled;
+  document.getElementById('miosAnalyticsChoiceNote').hidden=api.enabled;
+  renderLang();
+  if (!api.get()) show(false,false);
+  window.addEventListener('mios:privacychange',()=>{if(!api.get())show(false,false);else{banner.hidden=true;expand(false);}});
+})();
+</script>
+
+</body>
 </html>
